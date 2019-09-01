@@ -1,0 +1,144 @@
+using Enflow;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using WorQLess.Net.Extensions;
+
+namespace WorQLess.Net.Boosters
+{
+    public class WhereBooster : IBooster
+    {
+        private static readonly MethodInfo WhereMethod;
+        private static readonly MethodInfo ApplyOperandMethod;
+
+        static WhereBooster()
+        {
+            var enumerableMethods = typeof(Enumerable).GetMethods();
+
+            WhereMethod = enumerableMethods
+                .First(o =>
+                    o.Name == nameof(Enumerable.Where)
+                    && o.GetParameters()[1].ParameterType.GetGenericArguments().Length == 2
+                );
+
+            ApplyOperandMethod = typeof(WhereBooster)
+                .GetMethod(nameof(ApplyOperand), BindingFlags.NonPublic | BindingFlags.Static);
+        }
+
+        public virtual void Boost
+        (
+            TypeCreator typeCreator,
+            Type sourceType,
+            Type propertyType,
+            IDictionary<string, IFieldExpression> fields,
+            JProperty property,
+            Expression expression,
+            ParameterExpression initialParameter
+        )
+        {
+            var jArray = (JArray)property.Value;
+            var lastField = fields.Last();
+            var returnType = lastField.Value.Type.GetGenericArguments().LastOrDefault();
+            var _expression = GetRuleContainer(typeCreator, (JObject)jArray.First(), returnType);
+
+            foreach (JObject jObject in jArray.Skip(1))
+            {
+                var props = jObject.Properties()
+                    .ToDictionary(o => o.Name, o => o.Value);
+                var __expression = GetRuleContainer(typeCreator, props, returnType);
+
+                _expression = (Expression)ApplyOperandMethod
+                    .MakeGenericMethod(returnType)
+                    .Invoke(null, new object[] { props, _expression, __expression });
+            }
+
+            var method = WhereMethod
+                .MakeGenericMethod(returnType);
+
+            var whereExpression = Expression.Call
+            (
+                method,
+                lastField.Value.Expression,
+                _expression
+            );
+
+            fields.Remove(lastField.Key);
+            var fieldValue = new FieldExpression(whereExpression, initialParameter);
+            fields.Add(property.Name, fieldValue);
+        }
+
+        private static Expression GetRuleContainer(TypeCreator typeCreator, JObject jObject, Type returnType)
+        {
+            var props = jObject.Properties()
+                .ToDictionary(o => o.Name, o => o.Value);
+            return GetRuleContainer(typeCreator, props, returnType);
+        }
+
+        private static Expression GetRuleContainer(TypeCreator typeCreator, Dictionary<string, JToken> props, Type returnType)
+        {
+            var _fields = new Dictionary<string, IFieldExpression>();
+            var fieldExpression = typeCreator.BuildExpression(returnType, (JArray)props["args"], false);
+            var rules = (JArray)props["rules"];
+            var _expression = GetRule(typeCreator, (JObject)rules.First(), returnType, fieldExpression);
+
+            foreach (JObject rule in rules.Skip(1))
+            {
+                var _props = rule.Properties()
+                    .ToDictionary(o => o.Name, o => o.Value);
+                var __expression = GetRule(typeCreator, _props, returnType, fieldExpression);
+
+                _expression = (Expression)ApplyOperandMethod
+                    .MakeGenericMethod(returnType)
+                    .Invoke(null, new object[] { props, _expression, __expression });
+            }
+
+
+            return _expression;
+        }
+
+        private static Expression GetRule(TypeCreator typeCreator, JObject jObject, Type returnType, IFieldExpression fieldExpression)
+        {
+            var props = jObject.Properties()
+                .ToDictionary(o => o.Name, o => o.Value);
+            return GetRule(typeCreator, props, returnType, fieldExpression);
+        }
+
+        private static Expression GetRule(TypeCreator typeCreator, Dictionary<string, JToken> props, Type returnType, IFieldExpression fieldExpression)
+        {
+            var rule = (IWorQLessRuleBooster)Reflection.CreateRule(returnType, props["name"].ToObject<string>(), new Type[] { returnType }, null);
+            rule.FieldExpression = fieldExpression;
+            rule.Value = props["value"].ToObject<object>();
+
+            return (Expression)rule
+                .GetType()
+                .GetProperty(nameof(IProjection<object, object>.Predicate))
+                .GetValue(rule);
+        }
+
+        private static Expression<Func<T, bool>> ApplyOperand<T>(Dictionary<string, JToken> props, Expression<Func<T, bool>> expression1, Expression<Func<T, bool>> expression2)
+        {
+            var operand = 1;
+
+            if (props.ContainsKey("operand"))
+            {
+                operand = (int)props["operand"];
+            }
+
+            if (operand == 2)
+            {
+                return LinqKit.PredicateBuilder.Or(expression1, expression2);
+            }
+            else if (operand == 3)
+            {
+                return LinqKit.PredicateBuilder.And(expression1, expression2);
+            }
+            else
+            {
+                return LinqKit.PredicateBuilder.And(expression1, expression2);
+            }
+        }
+    }
+}
