@@ -44,19 +44,19 @@ namespace WorQLess.Net.Boosters
                 projection.GetLambdaExpression()
             );
 
-            return new FieldExpression(selectExpression, projection.InitialParameter);
+            //return new FieldExpression(selectExpression, projection.InitialParameter);
 
-            ////ToList() only when using aspnet core
-            //var toListMethod = ToListMethod
-            //	.MakeGenericMethod(projection.Type);
+            //ToList() only when using aspnet core
+            var toListMethod = ToListMethod
+                .MakeGenericMethod(projection.Type);
 
-            //var toListExpression = Expression.Call
-            //(
-            //	toListMethod,
-            //	selectExpression
-            //);
+            var toListExpression = Expression.Call
+            (
+                toListMethod,
+                selectExpression
+            );
 
-            //return new FieldExpression(toListExpression, projection.InitialParameter);
+            return new FieldExpression(toListExpression, projection.InitialParameter);
         }
 
         public virtual void Boost

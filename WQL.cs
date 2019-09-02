@@ -44,9 +44,12 @@ namespace WorQLess.Net
         public DbContext Context { get; protected set; }
         private IDictionary<string, Type> Tables = new Dictionary<string, Type>();
 
+        public static int Limit;
+
         static WQL()
         {
             BoosterPrefix = "$";
+            Limit = 500;
 
             TypeCreator = new TypeCreator("WorQLessDynamicAssembly");
             ProjectionsTypes = new Dictionary<string, Type>
@@ -55,27 +58,31 @@ namespace WorQLess.Net
             };
             RulesTypes = new Dictionary<string, Type>
             {
+                { BoosterPrefix + "==", typeof(EqualRule<>) },
+                { BoosterPrefix + "<=", typeof(LessThanOrEqualRule<>) },
                 { BoosterPrefix + "<", typeof(LessThanRule<>) },
+                { BoosterPrefix + ">=", typeof(GreaterThanOrEqualRule<>) },
                 { BoosterPrefix + ">", typeof(GreaterThanRule<>) }
             };
             WorkflowsTypes = new Dictionary<string, Type>
             {
                 { BoosterPrefix + "GroupBy", typeof(GroupByWorkflow<,>)},
                 { BoosterPrefix + "Select", typeof(SelectWorkflow<,>)},
-                { BoosterPrefix + "Take", typeof(TakeWorkflow<>)}
+                { BoosterPrefix + "Take", typeof(TakeWorkflow<>)},
+                { BoosterPrefix + "Where", typeof(WhereWorkflow<,>)}
             };
             GetTableMethod = typeof(WQL).GetMethod(nameof(GetTable), BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
-        public WQL(DbContext context)
+        public WQL(object context)
         {
-            Context = context;
+            Context = (DbContext)context;
             //        Tables = context.GetDbSetProperties()
             //.Select(o => o.PropertyType)
             //.Where(o => o.GetCustomAttribute<NotExposeAttribute>() == null)
             //.ToDictionary(o => o.Name.ToLower(), o => o);
 
-            var tables = context.GetDbSetProperties();
+            var tables = Context.GetDbSetProperties();
 
             foreach (var table in tables)
             {

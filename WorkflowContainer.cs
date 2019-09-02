@@ -68,7 +68,7 @@ namespace WorQLess.Net
 		{
 			var returnType = sourceType;
 
-			if (!string.IsNullOrEmpty(Request.Project.Name))
+			if (!string.IsNullOrEmpty(Request.Project?.Name))
 			{
 				if (Request.Project.Name == "Select")
 				{
@@ -162,7 +162,7 @@ namespace WorQLess.Net
 
 		public IQueryable<U> ApplyProjection<T, U>(IQueryable<T> collection)
 		{
-			if (string.IsNullOrEmpty(Request.Project.Name))
+			if (string.IsNullOrEmpty(Request.Project?.Name))
 			{
 				return (IQueryable<U>)collection;
 			}
@@ -177,7 +177,7 @@ namespace WorQLess.Net
 
 		public IEnumerable<U> ApplyProjection<T, U>(IEnumerable<T> collection)
 		{
-			if (string.IsNullOrEmpty(Request.Project.Name))
+			if (string.IsNullOrEmpty(Request.Project?.Name))
 			{
 				return (IEnumerable<U>)collection;
 			}

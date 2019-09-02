@@ -28,6 +28,24 @@ namespace WorQLess.Net.Boosters
                 .GetMethod(nameof(ApplyOperand), BindingFlags.NonPublic | BindingFlags.Static);
         }
 
+        public IFieldExpression BuildExpression(TypeCreator typeCreator, JArray jArray, Type returnType, ParameterExpression initialParameter)
+        {
+            var expression = GetRuleContainer(typeCreator, (JObject)jArray.First(), returnType);
+
+            foreach (JObject jObject in jArray.Skip(1))
+            {
+                var props = jObject.Properties()
+                    .ToDictionary(o => o.Name, o => o.Value);
+                var __expression = GetRuleContainer(typeCreator, props, returnType);
+
+                expression = (Expression)ApplyOperandMethod
+                    .MakeGenericMethod(returnType)
+                    .Invoke(null, new object[] { props, expression, __expression });
+            }
+
+            return new FieldExpression(expression, initialParameter);
+        }
+
         public virtual void Boost
         (
             TypeCreator typeCreator,
@@ -39,25 +57,12 @@ namespace WorQLess.Net.Boosters
             ParameterExpression initialParameter
         )
         {
-            var jArray = (JArray)property.Value;
             var lastField = fields.Last();
             var returnType = lastField.Value.Type.GetGenericArguments().LastOrDefault();
-            var _expression = GetRuleContainer(typeCreator, (JObject)jArray.First(), returnType);
-
-            foreach (JObject jObject in jArray.Skip(1))
-            {
-                var props = jObject.Properties()
-                    .ToDictionary(o => o.Name, o => o.Value);
-                var __expression = GetRuleContainer(typeCreator, props, returnType);
-
-                _expression = (Expression)ApplyOperandMethod
-                    .MakeGenericMethod(returnType)
-                    .Invoke(null, new object[] { props, _expression, __expression });
-            }
-
+            var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, initialParameter)
+                .Expression;
             var method = WhereMethod
                 .MakeGenericMethod(returnType);
-
             var whereExpression = Expression.Call
             (
                 method,

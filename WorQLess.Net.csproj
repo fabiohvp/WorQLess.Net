@@ -85,13 +85,17 @@
     <Compile Include="Requests\WorkflowRequest.cs" />
     <Compile Include="RuleContainer.cs" />
     <Compile Include="RuleOperand.cs" />
+    <Compile Include="Rules\GreaterThanOrEqualRule.cs" />
     <Compile Include="Rules\GreaterThanRule.cs" />
+    <Compile Include="Rules\EqualRule.cs" />
+    <Compile Include="Rules\LessThanOrEqualRule.cs" />
     <Compile Include="Rules\LessThanRule.cs" />
     <Compile Include="TypeCreator.cs" />
     <Compile Include="TypeCreator2.cs" />
     <Compile Include="WorkflowContainer.cs" />
     <Compile Include="WorkflowOperand.cs" />
     <Compile Include="Workflows\GroupByWorkflow.cs" />
+    <Compile Include="Workflows\WhereWorkflow.cs" />
     <Compile Include="Workflows\SelectWorkflow.cs" />
     <Compile Include="Workflows\CountWorkflow.cs" />
     <Compile Include="Workflows\TakeWorkflow.cs" />

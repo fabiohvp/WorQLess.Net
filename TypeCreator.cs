@@ -199,50 +199,39 @@ namespace WorQLess.Net
 
             var interfaces = properties.SelectMany(o => o.Value.Interfaces);
 
-            //if (interfaces.Any())
+            foreach (var @interface in interfaces)
             {
-                foreach (var @interface in interfaces)
-                {
-                    typeBuilder.AddInterfaceImplementation(@interface);
-                }
-
-                //TODO: FIX (THIS IS NOT WORKING)
-                foreach (var field in fields)
-                {
-                    FieldBuilder _field = typeBuilder.DefineField("m" + field.Key, field.Value, FieldAttributes.Private);
-                    PropertyBuilder propertyBuilder = typeBuilder.DefineProperty(field.Key, PropertyAttributes.None, field.Value, null);
-
-                    MethodAttributes getSetAttr = MethodAttributes.Public
-                        | MethodAttributes.HideBySig
-                        | MethodAttributes.SpecialName
-                        | MethodAttributes.Virtual;
-
-                    MethodBuilder getter = typeBuilder.DefineMethod("get_" + field.Key, getSetAttr, field.Value, Type.EmptyTypes);
-
-                    ILGenerator getIL = getter.GetILGenerator();
-                    getIL.Emit(OpCodes.Ldarg_0);
-                    getIL.Emit(OpCodes.Ldfld, _field);
-                    getIL.Emit(OpCodes.Ret);
-
-                    MethodBuilder setter = typeBuilder.DefineMethod("set_" + field.Key, getSetAttr, null, new Type[] { field.Value });
-
-                    ILGenerator setIL = setter.GetILGenerator();
-                    setIL.Emit(OpCodes.Ldarg_0);
-                    setIL.Emit(OpCodes.Ldarg_1);
-                    setIL.Emit(OpCodes.Stfld, _field);
-                    setIL.Emit(OpCodes.Ret);
-
-                    propertyBuilder.SetGetMethod(getter);
-                    propertyBuilder.SetSetMethod(setter);
-                }
+                typeBuilder.AddInterfaceImplementation(@interface);
             }
-            // else
-            // {
-            // 	foreach (var field in fields)
-            // 	{
-            // 		typeBuilder.DefineField(field.Key, field.Value, FieldAttributes.Public);
-            // 	}
-            // }
+
+            foreach (var field in fields)
+            {
+                FieldBuilder _field = typeBuilder.DefineField("m" + field.Key, field.Value, FieldAttributes.Private);
+                PropertyBuilder propertyBuilder = typeBuilder.DefineProperty(field.Key, PropertyAttributes.None, field.Value, null);
+
+                MethodAttributes getSetAttr = MethodAttributes.Public
+                    | MethodAttributes.HideBySig
+                    | MethodAttributes.SpecialName
+                    | MethodAttributes.Virtual;
+
+                MethodBuilder getter = typeBuilder.DefineMethod("get_" + field.Key, getSetAttr, field.Value, Type.EmptyTypes);
+
+                ILGenerator getIL = getter.GetILGenerator();
+                getIL.Emit(OpCodes.Ldarg_0);
+                getIL.Emit(OpCodes.Ldfld, _field);
+                getIL.Emit(OpCodes.Ret);
+
+                MethodBuilder setter = typeBuilder.DefineMethod("set_" + field.Key, getSetAttr, null, new Type[] { field.Value });
+
+                ILGenerator setIL = setter.GetILGenerator();
+                setIL.Emit(OpCodes.Ldarg_0);
+                setIL.Emit(OpCodes.Ldarg_1);
+                setIL.Emit(OpCodes.Stfld, _field);
+                setIL.Emit(OpCodes.Ret);
+
+                propertyBuilder.SetGetMethod(getter);
+                propertyBuilder.SetSetMethod(setter);
+            }
 
             BuiltTypes[className] = typeBuilder.CreateTypeInfo();
             return BuiltTypes[className];

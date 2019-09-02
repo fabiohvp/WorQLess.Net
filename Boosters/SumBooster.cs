@@ -35,8 +35,7 @@ namespace WorQLess.Net.Boosters
         )
         {
             var jArray = (JArray)property.Value;
-            var lastField = fields.Last();
-            var type = lastField.Value.Type.GetGenericArguments().LastOrDefault();
+            var type = expression.Type.GetGenericArguments().LastOrDefault();
             var projection = typeCreator.BuildExpression(type, jArray, false);
 
             var method = SumMethod
@@ -45,13 +44,29 @@ namespace WorQLess.Net.Boosters
             var _expression = Expression.Call
             (
                 method,
-                lastField.Value.Expression,
+                expression,
                 projection.GetLambdaExpression()
             );
 
-            fields.Remove(lastField.Key);
             var fieldValue = new FieldExpression(_expression, initialParameter);
             fields.Add(property.Name, fieldValue);
+            //var lastField = fields.Last();
+            //var type = lastField.Value.Type.GetGenericArguments().LastOrDefault();
+            //var projection = typeCreator.BuildExpression(type, jArray, false);
+
+            //var method = SumMethod
+            //    .MakeGenericMethod(type);
+
+            //var _expression = Expression.Call
+            //(
+            //    method,
+            //    lastField.Value.Expression,
+            //    projection.GetLambdaExpression()
+            //);
+
+            //fields.Remove(lastField.Key);
+            //var fieldValue = new FieldExpression(_expression, initialParameter);
+            //fields.Add(property.Name, fieldValue);
         }
     }
 }
