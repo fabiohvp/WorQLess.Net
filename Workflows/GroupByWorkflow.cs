@@ -1,4 +1,5 @@
 using Enflow;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using WorQLess.Attributes;
@@ -16,33 +17,18 @@ namespace WorQLess.Workflows
             var query = WorkflowContainer
                 .ApplyRules(candidate.AsQueryable());
 
-            var x = WorkflowContainer.Projection.FieldExpression;
-            var z = x.GetLambdaExpression<T, U>();
+            var groupByExpression = WorkflowContainer.Projection.FieldExpression;
+            var groupByLambda = groupByExpression.GetLambdaExpression<T, U>();
 
-            // var retorno = Workflow
-            // 	.ApplyProjection<T, U>(query);
-
-            var a = query
-                .GroupBy(z);
-
-            // .Select(o => new GroupByModel<T, U>
-            // {
-            // 	Data = o
-            // });
+            var retorno = query
+                .GroupBy(groupByLambda);
 
             if (WorkflowContainer.Evaluate)
             {
-                return a
-                    .Take(WQL.Limit)
-                    .ToList();
+                throw new InvalidOperationException("GroupBy workflow cannot be evaluated directly");
             }
 
-            return a;
+            return retorno;
         }
     }
-
-    // public class GroupByModel<T, U>
-    // {
-    // 	public IGrouping<U, T> Data { get; set; }
-    // }
 }

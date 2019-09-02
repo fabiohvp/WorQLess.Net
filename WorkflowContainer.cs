@@ -26,7 +26,9 @@ namespace WorQLess
 		IEnumerable<T> ApplyRules<T>(IEnumerable<T> collection);
 		IQueryable<U> ApplyProjection<T, U>(IQueryable<T> collection);
 		IEnumerable<U> ApplyProjection<T, U>(IEnumerable<T> collection);
-	}
+        IEnumerable<X> ApplyEvaluate<X>(IQueryable<X> collection);
+        IEnumerable<X> ApplyEvaluate<X>(IEnumerable<X> collection);
+    }
 
 	public class WorkflowContainer : IWorkflowContainer
 	{
@@ -190,5 +192,29 @@ namespace WorQLess
 
 			return retorno;
 		}
-	}
+
+        public IEnumerable<X> ApplyEvaluate<X>(IQueryable<X> collection)
+        {
+            if (Evaluate)
+            {
+                return collection
+                    .Take(WQL.Limit)
+                    .ToList();
+            }
+
+            return collection;
+        }
+
+        public IEnumerable<X> ApplyEvaluate<X>(IEnumerable<X> collection)
+        {
+            if (Evaluate)
+            {
+                return collection
+                    .Take(WQL.Limit)
+                    .ToList();
+            }
+
+            return collection;
+        }
+    }
 }

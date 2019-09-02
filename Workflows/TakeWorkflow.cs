@@ -22,14 +22,8 @@ namespace WorQLess.Workflows
                 .ApplyProjection<T, T>(query)
                 .Take(Amount);
 
-            if (WorkflowContainer.Evaluate)
-            {
-                return retorno
-                    .Take(WQL.Limit)
-                    .ToList();
-            }
-
-            return retorno;
+            return WorkflowContainer
+                .ApplyEvaluate(retorno);
         }
     }
 }
