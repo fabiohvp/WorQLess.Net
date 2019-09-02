@@ -72,10 +72,30 @@ namespace WorQLess.Boosters
         {
             var jObject = (JObject)property.Value;
             var properties = jObject.Properties();
+
             var _property = properties.First();
             var propertyInfo = propertyType.GetProperty(_property.Name);
             var fieldValue = Select(typeCreator, propertyInfo, _property, expression, initialParameter);
-            fields.Add(_property.Name, fieldValue);
+
+            var _fields = new Dictionary<string, IFieldExpression>();
+            _fields.Add(_property.Name, fieldValue);
+
+            foreach (var __property in properties.Skip(1))
+            {
+                var booster = typeCreator.GetBooster(__property.Name);
+
+                if (booster == default(IBooster))
+                {
+                    throw new InvalidOperationException("$select first property is you query and additional properties must be boosters");
+                }
+                else
+                {
+                    booster.Boost(typeCreator, sourceType, fieldValue.Type, _fields, __property, fieldValue.Expression, fieldValue.InitialParameter);
+                }
+            }
+
+
+            fields.Add(_fields.Last());
         }
     }
 }

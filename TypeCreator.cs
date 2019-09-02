@@ -87,55 +87,67 @@ namespace WorQLess
 
             foreach (var property in properties)
             {
-                var booster = Boosters
-                    .Where(o => property.Name.StartsWith(o.Key))
-                    .Select(o => o.Value)
-                    .FirstOrDefault();
-
-                if (booster != default(IBooster))
-                {
-                    booster.Boost(this, sourceType, type, fields, property, expression, initialParameter);
-                }
-                else if (property.Value is JValue)
-                {
-                    var jValue = (JValue)property.Value;
-                    var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, initialParameter);
-                    fields.Add(property.Name, fieldValue);
-                }
-                else if (property.Value is JObject)
-                {
-                    var _jObject = (JObject)property.Value;
-                    var _fields = GetExpressionFromObject(sourceType, _jObject, type, expression, initialParameter, level);
-                    var instanceType = CreateInstanceType(_fields);
-                    var instance = CreateInstance(_fields, instanceType);
-
-                    fields.Add
-                    (
-                        property.Name,
-                        new FieldExpression(instance, initialParameter, instanceType)
-                    );
-                }
-                else if (property.Value is JArray)
-                {
-                    if (type.GetProperty(property.Name).GetCustomAttribute<NotExposeAttribute>() != null)
-                    {
-                        throw new MissingFieldException($"{property.Path} does not exist or is not exposed");
-                    }
-
-                    var _expression = Expression.Property(expression, property.Name);
-                    var _type = type.GetProperty(property.Name).PropertyType;
-                    var jArray = (JArray)property.Value;
-                    var _fields = new Dictionary<string, IFieldExpression>();
-                    GetExpressionFromArray(sourceType, _fields, jArray, _type, _expression, initialParameter, level + level);
-
-                    foreach (var _field in _fields)
-                    {
-                        fields.Add(_field.Key, _field.Value);
-                    }
-                }
+                GetExpressionFromProperty(sourceType, fields, property, type, expression, initialParameter, level);
             }
 
             return fields;
+        }
+
+        public IBooster GetBooster(string name)
+        {
+            var booster = Boosters
+                .Where(o => name.StartsWith(o.Key))
+                .Select(o => o.Value)
+                .FirstOrDefault();
+
+            return booster;
+        }
+
+        public void GetExpressionFromProperty(Type sourceType, Dictionary<string, IFieldExpression> fields, JProperty property, Type type, Expression expression, ParameterExpression initialParameter, string level)
+        {
+            var booster = GetBooster(property.Name);
+
+            if (booster != default(IBooster))
+            {
+                booster.Boost(this, sourceType, type, fields, property, expression, initialParameter);
+            }
+            else if (property.Value is JValue)
+            {
+                var jValue = (JValue)property.Value;
+                var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, initialParameter);
+                fields.Add(property.Name, fieldValue);
+            }
+            else if (property.Value is JObject)
+            {
+                var _jObject = (JObject)property.Value;
+                var _fields = GetExpressionFromObject(sourceType, _jObject, type, expression, initialParameter, level);
+                var instanceType = CreateInstanceType(_fields);
+                var instance = CreateInstance(_fields, instanceType);
+
+                fields.Add
+                (
+                    property.Name,
+                    new FieldExpression(instance, initialParameter, instanceType)
+                );
+            }
+            else if (property.Value is JArray)
+            {
+                if (type.GetProperty(property.Name).GetCustomAttribute<NotExposeAttribute>() != null)
+                {
+                    throw new MissingFieldException($"{property.Path} does not exist or is not exposed");
+                }
+
+                var _expression = Expression.Property(expression, property.Name);
+                var _type = type.GetProperty(property.Name).PropertyType;
+                var jArray = (JArray)property.Value;
+                var _fields = new Dictionary<string, IFieldExpression>();
+                GetExpressionFromArray(sourceType, _fields, jArray, _type, _expression, initialParameter, level + level);
+
+                foreach (var _field in _fields)
+                {
+                    fields.Add(_field.Key, _field.Value);
+                }
+            }
         }
 
         public void GetExpressionFromArray(Type sourceType, Dictionary<string, IFieldExpression> fields, JArray jArray, Type type, Expression expression, ParameterExpression initialParameter, string level)
