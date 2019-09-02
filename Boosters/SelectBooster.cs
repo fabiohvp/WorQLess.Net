@@ -72,7 +72,6 @@ namespace WorQLess.Boosters
         {
             var jObject = (JObject)property.Value;
             var properties = jObject.Properties();
-
             var _property = properties.First();
             var propertyInfo = propertyType.GetProperty(_property.Name);
             var fieldValue = Select(typeCreator, propertyInfo, _property, expression, initialParameter);
