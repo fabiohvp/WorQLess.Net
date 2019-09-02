@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using WorQLess.Net.Extensions;
+using WorQLess.Extensions;
 
-namespace WorQLess.Net.Boosters
+namespace WorQLess.Boosters
 {
     public class WhereBooster : IBooster
     {

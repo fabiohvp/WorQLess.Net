@@ -1,9 +1,9 @@
 using Enflow;
 using System.Collections.Generic;
 using System.Linq;
-using WorQLess.Net.Attributes;
+using WorQLess.Attributes;
 
-namespace WorQLess.Net.Workflows
+namespace WorQLess.Workflows
 {
     [Expose]
     public class SelectWorkflow<T, U> : Workflow<IEnumerable<T>, IEnumerable<U>>

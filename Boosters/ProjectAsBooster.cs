@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Enflow;
-using WorQLess.Net.Extensions;
+using WorQLess.Extensions;
 using Newtonsoft.Json.Linq;
 
-namespace WorQLess.Net.Boosters
+namespace WorQLess.Boosters
 {
 	public class ProjectAsBooster : IBooster
 	{

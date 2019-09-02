@@ -4,10 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using WorQLess.Net.Attributes;
-using WorQLess.Net.Boosters;
+using WorQLess.Attributes;
+using WorQLess.Boosters;
 
-namespace WorQLess.Net.Workflows
+namespace WorQLess.Workflows
 {
     [Expose]
     public class WhereWorkflow<T, U> : Workflow<IEnumerable<T>, IEnumerable<U>>

@@ -1,6 +1,6 @@
 using System;
 
-namespace WorQLess.Net
+namespace WorQLess
 {
 
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = true, AllowMultiple = false)]

@@ -1,10 +1,10 @@
 using System;
 using System.Linq.Expressions;
-using WorQLess.Net.Attributes;
+using WorQLess.Attributes;
 using Enflow;
 using Newtonsoft.Json.Linq;
 
-namespace WorQLess.Net.Workflows
+namespace WorQLess.Workflows
 {
 	[Expose]
 	public class SelectProjection<T, U> : IProjection<T, U>

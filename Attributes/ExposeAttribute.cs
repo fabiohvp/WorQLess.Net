@@ -1,6 +1,6 @@
 using System;
 
-namespace WorQLess.Net.Attributes
+namespace WorQLess.Attributes
 {
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
 	public class ExposeAttribute : Attribute

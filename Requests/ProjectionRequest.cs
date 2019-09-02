@@ -1,7 +1,7 @@
 using System;
-using WorQLess.Net.Extensions;
+using WorQLess.Extensions;
 
-namespace WorQLess.Net.Requests
+namespace WorQLess.Requests
 {
 	public interface IProjectionRequest : IRequest
 	{

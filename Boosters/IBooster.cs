@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace WorQLess.Net.Boosters
+namespace WorQLess.Boosters
 {
     public interface IBooster
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace WorQLess.Net.Boosters
+namespace WorQLess.Boosters
 {
     public class AsBooster : IBooster
     {

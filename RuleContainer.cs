@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Enflow;
-using WorQLess.Net.Extensions;
-using WorQLess.Net.Requests;
+using WorQLess.Extensions;
+using WorQLess.Requests;
 using System;
 
-namespace WorQLess.Net
+namespace WorQLess
 {
 	public interface IRuleContainer
 	{

@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace WorQLess.Net
+namespace WorQLess
 {
 	public interface IRawArguments
 	{

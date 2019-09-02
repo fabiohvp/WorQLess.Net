@@ -1,4 +1,4 @@
-namespace WorQLess.Net
+namespace WorQLess
 {
 	public interface IDynamicProjection
 	{

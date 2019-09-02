@@ -1,4 +1,4 @@
-namespace WorQLess.Net.Requests
+namespace WorQLess.Requests
 {
 	public interface IRequest
 	{

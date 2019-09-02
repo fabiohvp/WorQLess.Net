@@ -32,7 +32,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Linq;
 
-namespace WorQLess.Net
+namespace WorQLess
 {
 	/// <summary>
 	/// Creates a new type dynamically.

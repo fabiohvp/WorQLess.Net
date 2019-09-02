@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Reflection;
-using WorQLess.Net.Requests;
-using WorQLess.Net.Rules;
-using WorQLess.Net.Workflows;
+using WorQLess.Requests;
+using WorQLess.Rules;
+using WorQLess.Workflows;
 
-namespace WorQLess.Net
+namespace WorQLess
 {
     public static class Extensions2
     {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace WorQLess.Net.Requests
+namespace WorQLess.Requests
 {
 	public interface IRuleRequest : IRequest
 	{

@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Enflow;
-using WorQLess.Net.Extensions;
-using WorQLess.Net.Requests;
+using WorQLess.Extensions;
+using WorQLess.Requests;
 
-namespace WorQLess.Net
+namespace WorQLess
 {
 	public interface IWorkflowContainer
 	{

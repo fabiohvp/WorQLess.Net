@@ -1,9 +1,9 @@
 ﻿using Enflow;
 using System;
 using System.Linq.Expressions;
-using WorQLess.Net.Attributes;
+using WorQLess.Attributes;
 
-namespace WorQLess.Net.Rules
+namespace WorQLess.Rules
 {
 
     [Expose]

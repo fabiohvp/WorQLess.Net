@@ -5,9 +5,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
-using WorQLess.Net.Boosters;
+using WorQLess.Boosters;
 
-namespace WorQLess.Net
+namespace WorQLess
 {
     public class TypeCreator
     {

@@ -5,9 +5,9 @@ using System;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using WorQLess.Net.Attributes;
+using WorQLess.Attributes;
 
-namespace WorQLess.Net.Extensions
+namespace WorQLess.Extensions
 {
 	public class Reflection
 	{

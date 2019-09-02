@@ -5,7 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace WorQLess.Net.Boosters
+namespace WorQLess.Boosters
 {
     public class SelectBooster : IBooster
     {
