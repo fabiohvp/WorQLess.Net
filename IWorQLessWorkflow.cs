@@ -1,8 +1,15 @@
+using System.Linq;
+
 namespace WorQLess
 {
     public interface IWorQLessWorkflowContainer
     {
         IWorkflowContainer WorkflowContainer { get; set; }
+    }
+
+    public interface IWorQLessWorkflowJoin
+    {
+        IQueryable PreviousWorkflowContainerResult { get; set; }
     }
 
     public interface IWorQLessDynamic

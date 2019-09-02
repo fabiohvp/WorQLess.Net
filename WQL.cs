@@ -66,6 +66,7 @@ namespace WorQLess
             };
             WorkflowsTypes = new Dictionary<string, Type>
             {
+                { BoosterPrefix + "GroupJoin", typeof(GroupJoinWorkflow<,>)},
                 { BoosterPrefix + "GroupBy", typeof(GroupByWorkflow<,>)},
                 { BoosterPrefix + "Select", typeof(SelectWorkflow<,>)},
                 { BoosterPrefix + "Take", typeof(TakeWorkflow<>)},
@@ -101,24 +102,26 @@ namespace WorQLess
             return Context.Set<T>();//.AsExpandable();
         }
 
-        public object Execute(IWorkflowContainer workflow, dynamic lastResult)
+        public object Execute(IWorkflowContainer workflow, dynamic data)
         {
-            if (workflow.Operand != WorkflowOperand.UseLastResult)
+            dynamic lastResult = data;
+
+            if (workflow.Operand != WorkflowOperand.UseLastResult || !string.IsNullOrEmpty(workflow.Entity))
             {
                 var entityType = Tables[workflow.Entity.ToLower()];
                 var setMethod = GetTableMethod.MakeGenericMethod(entityType);
-                lastResult = setMethod.Invoke(this, null);
+                data = setMethod.Invoke(this, null);
             }
 
-            var dataType = lastResult.GetType();
+            var dataType = data.GetType();
 
             if (dataType.IsGenericType)
             {
                 dataType = dataType.GenericTypeArguments[0];
             }
 
-            lastResult = workflow.Execute(dataType, lastResult);
-            return lastResult;
+            data = workflow.Execute(dataType, data, lastResult);
+            return data;
         }
 
         public List<object> Execute(IEnumerable<IWorkflowRequest> requests)

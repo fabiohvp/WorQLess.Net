@@ -15,7 +15,7 @@ namespace WorQLess
 		bool Evaluate { get; set; }
 		WorkflowOperand Operand { get; set; }
 
-		object Execute(Type sourceType, dynamic data);
+		object Execute(Type sourceType, dynamic data, dynamic lastResult);
 
 		IWorkflowRequest Request { get; set; }
 		IEnumerable<IRuleContainer> Rules { get; set; }
@@ -66,7 +66,7 @@ namespace WorQLess
 			Rules = rules;
 		}
 
-		public object Execute(Type sourceType, dynamic data)
+		public object Execute(Type sourceType, dynamic data, dynamic lastResult)
 		{
 			var returnType = sourceType;
 
@@ -115,6 +115,11 @@ namespace WorQLess
 			{
 				((IWorQLessWorkflowContainer)workflow).WorkflowContainer = this;
 			}
+
+            if (workflow is IWorQLessWorkflowJoin)
+            {
+                ((IWorQLessWorkflowJoin)workflow).PreviousWorkflowContainerResult = lastResult;
+            }
 
 			var execute = workflow
 				.GetType()

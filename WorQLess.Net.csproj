@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Enflow.Net">
-      <HintPath>..\..\Enflow.Net\Enflow.Net\bin\Debug\Enflow.Net.dll</HintPath>
+    <Reference Include="EnflowWithLinqKit.Net">
+      <HintPath>..\..\EnflowWithLinqKit.Net\EnflowWithLinqKit.Net\bin\Debug\EnflowWithLinqKit.Net.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
@@ -94,6 +94,7 @@
     <Compile Include="TypeCreator2.cs" />
     <Compile Include="WorkflowContainer.cs" />
     <Compile Include="WorkflowOperand.cs" />
+    <Compile Include="Workflows\GroupJoinWorkflow.cs" />
     <Compile Include="Workflows\GroupByWorkflow.cs" />
     <Compile Include="Workflows\WhereWorkflow.cs" />
     <Compile Include="Workflows\SelectWorkflow.cs" />

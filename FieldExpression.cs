@@ -55,7 +55,6 @@ namespace WorQLess
             return lambda;
         }
 
-
         public Expression<Func<T, bool>> GetLambdaExpression<T>(Func<Expression, Expression, BinaryExpression> operandMethod, object value)
         {
             var type = Nullable.GetUnderlyingType(Expression.Type) ?? Expression.Type;
