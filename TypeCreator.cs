@@ -193,7 +193,7 @@ namespace WorQLess
         public Type CreateInstanceType(IDictionary<string, IFieldExpression> properties)
         {
             var fields = properties
-                .ToDictionary(o => o.Key, o => o.Value.Type);
+                .ToDictionary(o => o.Key, o => o.Value.ReturnType);
 
             var className = GetClassName(fields);
 

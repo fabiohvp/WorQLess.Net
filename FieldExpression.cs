@@ -9,10 +9,9 @@ namespace WorQLess
         ParameterExpression InitialParameter { get; set; }
         Expression Expression { get; set; }
         IList<Type> Interfaces { get; set; }
-        Type Type { get; set; }
+        Type ReturnType { get; set; }
 
-        Expression GetLambdaExpression();
-        Expression<Func<T, IDynamicProjection>> GetLambdaExpression<T>();
+        LambdaExpression GetLambdaExpression();
         Expression<Func<T, U>> GetLambdaExpression<T, U>();
         Expression<Func<T, bool>> GetLambdaExpression<T>(Func<Expression, Expression, BinaryExpression> operandMethod, object value);
     }
@@ -22,7 +21,7 @@ namespace WorQLess
         public ParameterExpression InitialParameter { get; set; }
         public Expression Expression { get; set; }
         public IList<Type> Interfaces { get; set; }
-        public Type Type { get; set; }
+        public Type ReturnType { get; set; }
 
         public FieldExpression(Expression expression, ParameterExpression initialParameter)
             : this(expression, initialParameter, expression.Type)
@@ -33,22 +32,16 @@ namespace WorQLess
         {
             Expression = expression;
             InitialParameter = initialParameter;
-            Type = type;
+            ReturnType = type;
             Interfaces = new List<Type>();
         }
 
-        public Expression GetLambdaExpression()
+        public LambdaExpression GetLambdaExpression()
         {
             var lambda = Expression.Lambda(Expression, InitialParameter);
             return lambda;
         }
-
-        public Expression<Func<T, IDynamicProjection>> GetLambdaExpression<T>()
-        {
-            var lambda = Expression.Lambda<Func<T, IDynamicProjection>>(Expression, InitialParameter);
-            return lambda;
-        }
-
+        
         public Expression<Func<T, U>> GetLambdaExpression<T, U>()
         {
             var lambda = Expression.Lambda<Func<T, U>>(Expression, InitialParameter);

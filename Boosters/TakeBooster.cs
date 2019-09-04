@@ -35,7 +35,7 @@ namespace WorQLess.Boosters
             if (fields.Any())
             {
                 var lastField = fields.Last();
-                var type = lastField.Value.Type.GetGenericArguments().LastOrDefault();
+                var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
 
                 var method = TakeMethod
                     .MakeGenericMethod(type);

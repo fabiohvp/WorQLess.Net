@@ -33,7 +33,7 @@ namespace WorQLess.Boosters
 
             var jArray = (JArray)property.Value;
             var projection = typeCreator.BuildExpression(propertyType, jArray, false);
-            var type = projection.Type.GetGenericArguments().LastOrDefault();
+            var type = projection.ReturnType.GetGenericArguments().LastOrDefault();
 
             //db.ReceitaMunicipio.SelectMany(o => o.EsferaAdministrativa.ReceitasMunicipio.Select(p => new { p.Arrecadada }));
             var method = SelectManyMethod

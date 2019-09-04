@@ -8,8 +8,8 @@ namespace WorQLess.Workflows
 {
 	[Expose]
 	public class SelectProjection<T, U> : IProjection<T, U>
-		, IWorQLessDynamic
-		, IRawArguments
+		, IWorQLessDynamic2
+        , IRawArguments
 	{
 		public virtual IFieldExpression FieldExpression { get; set; }
 		public virtual JArray Arguments { get; set; }

@@ -35,11 +35,11 @@ namespace WorQLess.Boosters
         {
             var jArray = (JArray)property.Value;
             var lastField = fields.Last();
-            var type = lastField.Value.Type.GetGenericArguments().LastOrDefault();
+            var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
             var projection = typeCreator.BuildExpression(type, jArray, false);
 
             var method = OrderByMethod
-                .MakeGenericMethod(type, projection.Type);
+                .MakeGenericMethod(type, projection.ReturnType);
 
             var _expression = Expression.Call
             (

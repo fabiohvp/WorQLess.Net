@@ -7,6 +7,11 @@ namespace WorQLess
         IWorkflowContainer WorkflowContainer { get; set; }
     }
 
+    public interface IWorQLessProjection
+    {
+        IWorQLessDynamic Projection { get; set; }
+    }
+
     public interface IWorQLessWorkflowJoin
     {
         IQueryable PreviousWorkflowContainerResult { get; set; }
@@ -15,6 +20,10 @@ namespace WorQLess
     public interface IWorQLessDynamic
     {
         IFieldExpression FieldExpression { get; set; }
+    }
+
+    public interface IWorQLessDynamic2 : IWorQLessDynamic
+    {
     }
 
     public interface IWorQLessRuleBooster : IWorQLessDynamic

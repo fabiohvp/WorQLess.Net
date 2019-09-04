@@ -31,7 +31,7 @@ namespace WorQLess.Boosters
             var projection = typeCreator.BuildExpression(propertyType, jArray);
 
             var method = SelectMethod
-                .MakeGenericMethod(propertyType, projection.Type);
+                .MakeGenericMethod(propertyType, projection.ReturnType);
 
             var selectExpression = Expression.Call
             (
@@ -87,7 +87,7 @@ namespace WorQLess.Boosters
                 }
                 else
                 {
-                    booster.Boost(typeCreator, sourceType, fieldValue.Type, _fields, __property, fieldValue.Expression, fieldValue.InitialParameter);
+                    booster.Boost(typeCreator, sourceType, fieldValue.ReturnType, _fields, __property, fieldValue.Expression, fieldValue.InitialParameter);
                 }
             }
 

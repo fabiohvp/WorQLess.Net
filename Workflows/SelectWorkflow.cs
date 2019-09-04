@@ -9,7 +9,7 @@ namespace WorQLess.Workflows
     public class SelectWorkflow<T, U> : Workflow<IQueryable<T>, U>
         , IWorQLessWorkflowContainer
     {
-        public IWorkflowContainer WorkflowContainer { get; set; }
+        public virtual IWorkflowContainer WorkflowContainer { get; set; }
 
         protected override U ExecuteWorkflow(IQueryable<T> candidate)
         {

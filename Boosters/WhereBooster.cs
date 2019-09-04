@@ -60,7 +60,7 @@ namespace WorQLess.Boosters
             if (fields.Any())
             {
                 var lastField = fields.Last();
-                var returnType = lastField.Value.Type.GetGenericArguments().LastOrDefault();
+                var returnType = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
                 var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, initialParameter)
                     .Expression;
                 var method = WhereMethod

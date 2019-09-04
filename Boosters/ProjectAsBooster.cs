@@ -27,7 +27,7 @@ namespace WorQLess.Boosters
 			var lastExpression = fields[lastKey];
 
 			var projection = Reflection
-				.CreateProjection(sourceType, property.Value.ToString(), new Type[] { lastExpression.Type }, null);
+				.CreateProjection(sourceType, property.Value.ToString(), new Type[] { lastExpression.ReturnType }, null);
 
 			var predicate = projection
 				.GetType()

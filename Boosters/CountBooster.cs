@@ -34,7 +34,7 @@ namespace WorQLess.Boosters
         )
         {
             var lastField = fields.Last();
-            var type = lastField.Value.Type.GetGenericArguments().LastOrDefault();
+            var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
 
             var method = CountMethod
                 .MakeGenericMethod(type);
