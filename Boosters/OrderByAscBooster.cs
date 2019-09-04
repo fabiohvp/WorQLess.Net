@@ -13,11 +13,11 @@ namespace WorQLess.Boosters
 
         static OrderByAscBooster()
         {
-            var enumerableMethods = typeof(Enumerable).GetMethods();
+            var enumerableMethods = typeof(Queryable).GetMethods();
 
             OrderByMethod = enumerableMethods
                 .First(o =>
-                    o.Name == nameof(Enumerable.OrderBy)
+                    o.Name == nameof(Queryable.OrderBy)
                     && o.GetParameters().Length == 2
                 );
         }

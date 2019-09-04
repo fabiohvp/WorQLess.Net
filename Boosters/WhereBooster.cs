@@ -16,12 +16,12 @@ namespace WorQLess.Boosters
 
         static WhereBooster()
         {
-            var enumerableMethods = typeof(Enumerable).GetMethods();
+            var enumerableMethods = typeof(Queryable).GetMethods();
 
             WhereMethod = enumerableMethods
                 .First(o =>
-                    o.Name == nameof(Enumerable.Where)
-                    && o.GetParameters()[1].ParameterType.GetGenericArguments().Length == 2
+                    o.Name == nameof(Queryable.Where)
+                    && o.GetParameters()[1].ParameterType.GetGenericArguments()[0].GetGenericArguments().Length == 2
                 );
 
             ApplyOperandMethod = typeof(WhereBooster)
@@ -57,22 +57,42 @@ namespace WorQLess.Boosters
             ParameterExpression initialParameter
         )
         {
-            var lastField = fields.Last();
-            var returnType = lastField.Value.Type.GetGenericArguments().LastOrDefault();
-            var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, initialParameter)
-                .Expression;
-            var method = WhereMethod
-                .MakeGenericMethod(returnType);
-            var whereExpression = Expression.Call
-            (
-                method,
-                lastField.Value.Expression,
-                _expression
-            );
+            if (fields.Any())
+            {
+                var lastField = fields.Last();
+                var returnType = lastField.Value.Type.GetGenericArguments().LastOrDefault();
+                var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, initialParameter)
+                    .Expression;
+                var method = WhereMethod
+                    .MakeGenericMethod(returnType);
+                var whereExpression = Expression.Call
+                (
+                    method,
+                    lastField.Value.Expression,
+                    _expression
+                );
 
-            fields.Remove(lastField.Key);
-            var fieldValue = new FieldExpression(whereExpression, initialParameter);
-            fields.Add(property.Name, fieldValue);
+                fields.Remove(lastField.Key);
+                var fieldValue = new FieldExpression(whereExpression, initialParameter);
+                fields.Add(property.Name, fieldValue);
+            }
+            else
+            {
+                var returnType = expression.Type.GetGenericArguments().LastOrDefault();
+                var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, initialParameter)
+                    .Expression;
+                var method = WhereMethod
+                    .MakeGenericMethod(returnType);
+                var whereExpression = Expression.Call
+                (
+                    method,
+                    expression,
+                    _expression
+                );
+
+                var fieldValue = new FieldExpression(whereExpression, initialParameter);
+                fields.Add(property.Name, fieldValue);
+            }
         }
 
         private static Expression GetRuleContainer(TypeCreator typeCreator, JObject jObject, Type returnType)

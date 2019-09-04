@@ -83,14 +83,18 @@ namespace WorQLess
         public Dictionary<string, IFieldExpression> GetExpressionFromObject(Type sourceType, JObject jObject, Type type, Expression expression, ParameterExpression initialParameter, string level)
         {
             var fields = new Dictionary<string, IFieldExpression>();
+            GetExpressionFromObject(sourceType, fields, jObject, type, expression, initialParameter, level);
+            return fields;
+        }
+
+        public void GetExpressionFromObject(Type sourceType, Dictionary<string, IFieldExpression> fields, JObject jObject, Type type, Expression expression, ParameterExpression initialParameter, string level)
+        {
             var properties = jObject.Properties();
 
             foreach (var property in properties)
             {
                 GetExpressionFromProperty(sourceType, fields, property, type, expression, initialParameter, level);
             }
-
-            return fields;
         }
 
         public IBooster GetBooster(string name)
@@ -162,12 +166,7 @@ namespace WorQLess
                 }
                 else if (item is JObject)
                 {
-                    var _fields = GetExpressionFromObject(sourceType, (JObject)item, type, expression, initialParameter, level);
-
-                    foreach (var _field in _fields)
-                    {
-                        fields.Add(_field.Key, _field.Value);
-                    }
+                    GetExpressionFromObject(sourceType, fields, (JObject)item, type, expression, initialParameter, level);
                 }
                 else if (item is JArray)
                 {

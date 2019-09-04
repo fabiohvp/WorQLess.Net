@@ -31,8 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="EnflowWithLinqKit.Net">
-      <HintPath>..\..\EnflowWithLinqKit.Net\EnflowWithLinqKit.Net\bin\Debug\EnflowWithLinqKit.Net.dll</HintPath>
+    <Reference Include="Enflow.Net, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Enflow.Net\Enflow.Net\bin\Debug\Enflow.Net.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>

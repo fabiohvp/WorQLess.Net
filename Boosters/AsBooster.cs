@@ -19,17 +19,28 @@ namespace WorQLess.Boosters
             ParameterExpression initialParameter
         )
         {
-            var lastKey = fields
-                .Keys
-                .Last();
-            var lastExpression = fields[lastKey];
+            if (fields.Any())
+            {
+                var lastKey = fields
+                    .Keys
+                    .Last();
+                var lastExpression = fields[lastKey];
 
-            fields.Remove(lastKey);
-            fields.Add
-            (
-                property.Value.ToString(),
-                lastExpression
-            );
+                fields.Remove(lastKey);
+                fields.Add
+                (
+                    property.Value.ToString(),
+                    lastExpression
+                );
+            }
+            else
+            {
+                // fields.Add
+                //(
+                //    property.Value.ToString(),
+                //    new FieldExpression(expression, initialParameter)
+                //);
+            }
         }
     }
 }

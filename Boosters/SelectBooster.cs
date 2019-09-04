@@ -14,24 +14,20 @@ namespace WorQLess.Boosters
 
         static SelectBooster()
         {
-            var enumerableMethods = typeof(Enumerable).GetMethods();
+            var enumerableMethods = typeof(Queryable).GetMethods();
 
             SelectMethod = enumerableMethods
                 .First(o =>
-                    o.Name == nameof(Enumerable.Select)
-                    && o.GetParameters().Length == 2
+                    o.Name == nameof(Queryable.Select)
+                    && o.GetParameters()[1].ParameterType.GetGenericArguments()[0].GetGenericArguments().Length == 2
                 );
 
-            ToListMethod = enumerableMethods
-                .First(o => o.Name == nameof(Enumerable.ToList));
+            //ToListMethod = enumerableMethods
+            //    .First(o => o.Name == nameof(Enumerable.ToList));
         }
 
-        private FieldExpression Select(TypeCreator typeCreator, PropertyInfo propertyInfo, JProperty property, Expression expression, ParameterExpression initialParameter)
+        public FieldExpression Select(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression initialParameter)
         {
-            var propertyType = propertyInfo.PropertyType.GetGenericArguments().LastOrDefault();
-            var _expression = Expression.Property(expression, propertyInfo);
-
-            var jArray = (JArray)property.Value;
             var projection = typeCreator.BuildExpression(propertyType, jArray);
 
             var method = SelectMethod
@@ -40,25 +36,25 @@ namespace WorQLess.Boosters
             var selectExpression = Expression.Call
             (
                 method,
-                _expression,
+                expression,
                 projection.GetLambdaExpression()
             );
 
-            //return new FieldExpression(selectExpression, projection.InitialParameter);
+            return new FieldExpression(selectExpression, projection.InitialParameter);
 
             //ToList() only when using aspnet core
-            var toListMethod = ToListMethod
-                .MakeGenericMethod(projection.Type);
+            //var toListMethod = ToListMethod
+            //    .MakeGenericMethod(projection.Type);
 
-            var toListExpression = Expression.Call
-            (
-                toListMethod,
-                selectExpression
-            );
+            //var toListExpression = Expression.Call
+            //(
+            //    toListMethod,
+            //    selectExpression
+            //);
 
-            return new FieldExpression(toListExpression, projection.InitialParameter);
+            //return new FieldExpression(toListExpression, projection.InitialParameter);
         }
-
+        
         public virtual void Boost
         (
             TypeCreator typeCreator,
@@ -74,7 +70,9 @@ namespace WorQLess.Boosters
             var properties = jObject.Properties();
             var _property = properties.First();
             var propertyInfo = propertyType.GetProperty(_property.Name);
-            var fieldValue = Select(typeCreator, propertyInfo, _property, expression, initialParameter);
+            var _propertyType = propertyInfo.PropertyType.GetGenericArguments().LastOrDefault();
+            var _expression = Expression.Property(expression, propertyInfo);
+            var fieldValue = Select(typeCreator, _propertyType, (JArray)_property.Value, _expression, initialParameter);
 
             var _fields = new Dictionary<string, IFieldExpression>();
             _fields.Add(_property.Name, fieldValue);

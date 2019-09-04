@@ -13,10 +13,10 @@ namespace WorQLess.Boosters
 
         static TakeBooster()
         {
-            var enumerableMethods = typeof(Enumerable).GetMethods();
+            var enumerableMethods = typeof(Queryable).GetMethods();
 
-            TakeMethod = typeof(Enumerable)
-                .GetMethod(nameof(Enumerable.Take));
+            TakeMethod = typeof(Queryable)
+                .GetMethod(nameof(Queryable.Take));
         }
 
         public virtual void Boost
@@ -31,22 +31,43 @@ namespace WorQLess.Boosters
         )
         {
             var count = property.Value.ToObject<int>();
-            var lastField = fields.Last();
-            var type = lastField.Value.Type.GetGenericArguments().LastOrDefault();
 
-            var method = TakeMethod
-                .MakeGenericMethod(type);
+            if (fields.Any())
+            {
+                var lastField = fields.Last();
+                var type = lastField.Value.Type.GetGenericArguments().LastOrDefault();
 
-            var _expression = Expression.Call
-            (
-                method,
-                lastField.Value.Expression,
-                Expression.Constant(count)
-            );
+                var method = TakeMethod
+                    .MakeGenericMethod(type);
 
-            fields.Remove(lastField.Key);
-            var fieldValue = new FieldExpression(_expression, initialParameter);
-            fields.Add(property.Name, fieldValue);
+                var _expression = Expression.Call
+                (
+                    method,
+                    lastField.Value.Expression,
+                    Expression.Constant(count)
+                );
+
+                fields.Remove(lastField.Key);
+                var fieldValue = new FieldExpression(_expression, initialParameter);
+                fields.Add(property.Name, fieldValue);
+            }
+            else
+            {
+                var type = expression.Type.GetGenericArguments().LastOrDefault();
+
+                var method = TakeMethod
+                    .MakeGenericMethod(type);
+
+                var _expression = Expression.Call
+                (
+                    method,
+                    expression,
+                    Expression.Constant(count)
+                );
+
+                var fieldValue = new FieldExpression(_expression, initialParameter);
+                fields.Add(property.Name, fieldValue);
+            }
         }
     }
 }

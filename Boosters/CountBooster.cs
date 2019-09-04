@@ -13,11 +13,11 @@ namespace WorQLess.Boosters
 
         static CountBooster()
         {
-            var enumerableMethods = typeof(Enumerable).GetMethods();
+            var enumerableMethods = typeof(Queryable).GetMethods();
 
             CountMethod = enumerableMethods
                 .First(o =>
-                    o.Name == nameof(Enumerable.Count)
+                    o.Name == nameof(Queryable.Count)
                     && o.GetParameters().Length == 1
                 );
         }
