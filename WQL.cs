@@ -66,11 +66,7 @@ namespace WorQLess
             };
             WorkflowsTypes = new Dictionary<string, Type>
             {
-                { BoosterPrefix + "GroupJoin", typeof(GroupJoinWorkflow<,>)},
-                { BoosterPrefix + "GroupBy", typeof(GroupByWorkflow<,>)},
-                { BoosterPrefix + "Select", typeof(SelectWorkflow<,>)},
-                { BoosterPrefix + "Take", typeof(TakeWorkflow<>)},
-                { BoosterPrefix + "Where", typeof(WhereWorkflow<,>)}
+                { BoosterPrefix + "Select", typeof(SelectWorkflow<,>)}
             };
             GetTableMethod = typeof(WQL).GetMethod(nameof(GetTable), BindingFlags.Instance | BindingFlags.NonPublic);
         }

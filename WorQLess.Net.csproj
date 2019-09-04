@@ -95,12 +95,8 @@
     <Compile Include="TypeCreator2.cs" />
     <Compile Include="WorkflowContainer.cs" />
     <Compile Include="WorkflowOperand.cs" />
-    <Compile Include="Workflows\GroupJoinWorkflow.cs" />
-    <Compile Include="Workflows\GroupByWorkflow.cs" />
-    <Compile Include="Workflows\WhereWorkflow.cs" />
     <Compile Include="Workflows\SelectWorkflow.cs" />
-    <Compile Include="Workflows\CountWorkflow.cs" />
-    <Compile Include="Workflows\TakeWorkflow.cs" />
+    <Compile Include="Workflows\WQLWorkflow.cs" />
     <Compile Include="WQL.cs" />
   </ItemGroup>
   <ItemGroup>
