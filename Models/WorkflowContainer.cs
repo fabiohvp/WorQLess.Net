@@ -91,7 +91,6 @@ namespace WorQLess.Models
             }
             else
             {
-
                 var projection = (IWorQLessProjection)Reflection.CreateProjection(sourceType, Request.Project.Name, new Type[] { sourceType, returnType }, Request.Project.Args);
                 projection.FieldExpression = fieldExpression;
                 Projection = projection;

@@ -11,26 +11,43 @@ namespace WorQLess.Boosters
 {
     public class SelectBooster : IBooster
     {
+        private static readonly MethodInfo AsQueryableMethod;
         private static MethodInfo SelectMethod;
-        private static readonly MethodInfo ToListMethod;
 
         static SelectBooster()
         {
             var enumerableMethods = typeof(Queryable).GetMethods();
+
+            AsQueryableMethod = enumerableMethods
+                .First(o =>
+                    o.Name == nameof(Queryable.AsQueryable)
+                    && o.GetGenericArguments().Length == 1
+                );
 
             SelectMethod = enumerableMethods
                 .First(o =>
                     o.Name == nameof(Queryable.Select)
                     && o.GetParameters()[1].ParameterType.GetGenericArguments()[0].GetGenericArguments().Length == 2
                 );
-
-            //ToListMethod = enumerableMethods
-            //    .First(o => o.Name == nameof(Enumerable.ToList));
         }
 
         public FieldExpression Select(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression parameter)
         {
             var projection = typeCreator.BuildExpression(propertyType, jArray);
+
+            var _expression = expression;
+
+            if (_expression.Type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+            {
+                var asQueryableMethod = AsQueryableMethod
+                    .MakeGenericMethod(propertyType);
+
+                _expression = Expression.Call
+                (
+                    asQueryableMethod,
+                    _expression
+                );
+            }
 
             var method = SelectMethod
                 .MakeGenericMethod(propertyType, projection.ReturnType);
@@ -38,7 +55,7 @@ namespace WorQLess.Boosters
             var selectExpression = Expression.Call
             (
                 method,
-                expression,
+                _expression,
                 projection.GetLambdaExpression()
             );
 

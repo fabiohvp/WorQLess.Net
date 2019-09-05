@@ -1,0 +1,19 @@
+﻿[
+  {
+    "entity": "FT_ReceitaMunicipio",
+    "name": "Select",
+    "project": {
+      "name": "Select",
+      "args": [
+        [
+          "Arrecadada",
+          "IdTempo"
+        ],
+        {
+          "$groupBy": [ "IdTempo" ],
+          "$select": ["Arrecadada"]
+        }
+      ]
+    }
+  }
+]

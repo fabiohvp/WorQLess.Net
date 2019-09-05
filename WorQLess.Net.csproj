@@ -69,6 +69,7 @@
     <Compile Include="Boosters\SelectBooster.cs" />
     <Compile Include="Boosters\CountBooster.cs" />
     <Compile Include="Boosters\OrderByAscBooster.cs" />
+    <Compile Include="Boosters\GroupByBooster.cs" />
     <Compile Include="Boosters\WhereBooster.cs" />
     <Compile Include="Boosters\TakeBooster.cs" />
     <Compile Include="Boosters\SumBooster.cs" />
@@ -106,6 +107,9 @@
     <None Include="LICENSE" />
     <None Include="packages.config" />
     <None Include="README.md" />
+    <None Include="test.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include=".gitignore" />

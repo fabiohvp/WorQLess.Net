@@ -36,14 +36,14 @@ namespace WorQLess.Extensions
             var fields = new Dictionary<string, IFieldExpression>();
             GetExpressionFromArray(sourceType, fields, jArray, sourceType, body, parameter, "o");
 
-            if (createAnonymousProjection)
+            if (!createAnonymousProjection && fields.Count == 1)
             {
-                var dynamicType = CreateInstanceType(fields);
-                body = CreateInstance(fields, dynamicType);
-                return new FieldExpression(body, parameter, dynamicType);
+                return fields[fields.Select(o => o.Key).First()];
             }
 
-            return fields[fields.Select(o => o.Key).First()];
+            var dynamicType = CreateInstanceType(fields);
+            body = CreateInstance(fields, dynamicType);
+            return new FieldExpression(body, parameter, dynamicType);
         }
 
         public virtual IFieldExpression BuildExpression(Type sourceType, ProjectionRequest projectionRequest)
@@ -64,10 +64,20 @@ namespace WorQLess.Extensions
 
                     var booster = new SelectBooster();
                     var selectProjection = booster.Select(WQL.TypeCreator, sourceType, firstArg, body, parameter);
-                    var otherArgs = new JArray(args.Skip(1));
-                    var otherProjections = WQL.TypeCreator.BuildExpression(selectProjection.Expression.Type, otherArgs, false);
 
-                    return selectProjection.Combine(otherProjections, parameter);
+                    if (args.Count > 1)
+                    {
+                        var otherArgs = new JArray(args.Skip(1));
+                        var otherProjections = WQL.TypeCreator.BuildExpression(selectProjection.Expression.Type, otherArgs, false);
+
+                        return selectProjection.Combine(otherProjections, parameter);
+                    }
+                    else
+                    {
+                        selectProjection.Parameter = parameter;
+                    }
+
+                    return selectProjection;
                 }
                 else if (typeof(IWorQLessProjection).IsAssignableFrom(projectionType))
                 {

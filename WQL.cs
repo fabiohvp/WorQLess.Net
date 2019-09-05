@@ -39,7 +39,8 @@ namespace WorQLess
                 { BoosterPrefix + "as", new AsBooster() },
                 { BoosterPrefix + "count", new CountBooster() },
 				//new KeyValuePair<string, IBooster>(BoosterPrefix + "implements", new ImplementsBooster()), //not working yet
-				{ BoosterPrefix + "orderByAsc", new OrderByAscBooster() },
+                { BoosterPrefix + "groupBy", new GroupByBooster() },
+                { BoosterPrefix + "orderByAsc", new OrderByAscBooster() },
                 { BoosterPrefix + "orderByDesc", new OrderByDescBooster() },
                 { BoosterPrefix + "projectAs", new ProjectAsBooster() },
 				//new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "selectMany", new SelectManyBooster()}, //parameter is wrong

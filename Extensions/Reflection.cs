@@ -33,7 +33,7 @@ namespace WorQLess.Extensions
                 }
                 else
                 {
-                    var args = ((Newtonsoft.Json.Linq.JObject)@params).Properties();
+                    var args = ((JObject)@params).Properties();
 
                     try
                     {
