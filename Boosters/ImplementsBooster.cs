@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using WorQLess.Extensions;
+using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
@@ -17,7 +19,7 @@ namespace WorQLess.Boosters
             IDictionary<string, IFieldExpression> fields,
             JProperty property,
             Expression expression,
-            ParameterExpression initialParameter
+            ParameterExpression parameter
         )
         {
             var _properties = ((JArray)property.Value)

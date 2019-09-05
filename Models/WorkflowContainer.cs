@@ -2,11 +2,11 @@ using Enflow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using WorQLess.Net.Projections;
-using WorQLess.Net.Workflows;
+using WorQLess.Extensions;
 using WorQLess.Requests;
+using WorQLess.Workflows;
 
-namespace WorQLess
+namespace WorQLess.Models
 {
     public interface IWorkflowContainer
     {
@@ -21,7 +21,7 @@ namespace WorQLess
         IWorkflowRequest Request { get; set; }
         IEnumerable<IRuleContainer> Rules { get; set; }
 
-        IWorQLessDynamic Projection { get; }
+        object Projection { get; }
 
         IQueryable<T> ApplyRules<T>(IQueryable<T> collection);
         IEnumerable<T> ApplyRules<T>(IEnumerable<T> collection);
@@ -41,7 +41,7 @@ namespace WorQLess
         public virtual WorkflowOperand Operand { get; set; }
         public virtual IEnumerable<IRuleContainer> Rules { get; set; }
 
-        public IWorQLessDynamic Projection { get; private set; }
+        public virtual object Projection { get; private set; }
 
 
         public WorkflowContainer(IWorkflowRequest request)
@@ -67,14 +67,35 @@ namespace WorQLess
             Rules = rules;
         }
 
-        public object Execute(Type sourceType, dynamic data, dynamic lastResult)
+        public virtual object Execute(Type sourceType, dynamic data, dynamic lastResult)
         {
             var returnType = sourceType;
-            Projection = ProjectionFactory.Create(sourceType, Request.Project);
+            var fieldExpression = WQL.TypeCreator.BuildExpression(sourceType, Request.Project);
 
-            if (Projection != null)
+            if (fieldExpression == default(IFieldExpression))
             {
-                returnType = Projection.FieldExpression.ReturnType;
+                var projectionInterface = Request.Project.Type
+                    .GetInterfaces()
+                    .FirstOrDefault(o =>
+                        o.IsGenericType
+                        && o.GetGenericTypeDefinition() == typeof(IProjection<,>)
+                    );
+
+                if (projectionInterface != null)
+                {
+                    returnType = projectionInterface.GenericTypeArguments
+                        .LastOrDefault();
+                }
+
+                Projection = Reflection.CreateProjection(sourceType, Request.Project.Name, new Type[] { sourceType, returnType }, Request.Project.Args);
+            }
+            else
+            {
+
+                var projection = (IWorQLessProjection)Reflection.CreateProjection(sourceType, Request.Project.Name, new Type[] { sourceType, returnType }, Request.Project.Args);
+                projection.FieldExpression = fieldExpression;
+                Projection = projection;
+                returnType = fieldExpression.ReturnType;
             }
 
             var workflow = WorkflowFactory.Create(sourceType, returnType, this);
@@ -96,7 +117,7 @@ namespace WorQLess
             }
         }
 
-        public IQueryable<T> ApplyRules<T>(IQueryable<T> collection)
+        public virtual IQueryable<T> ApplyRules<T>(IQueryable<T> collection)
         {
             if (Rules.Any())
             {
@@ -110,7 +131,7 @@ namespace WorQLess
             return collection;
         }
 
-        public IEnumerable<T> ApplyRules<T>(IEnumerable<T> collection)
+        public virtual IEnumerable<T> ApplyRules<T>(IEnumerable<T> collection)
         {
             if (Rules.Any())
             {
@@ -125,7 +146,7 @@ namespace WorQLess
             return collection;
         }
 
-        public IQueryable<U> ApplyProjection<T, U>(IQueryable<T> collection)
+        public virtual IQueryable<U> ApplyProjection<T, U>(IQueryable<T> collection)
         {
             if (string.IsNullOrEmpty(Request.Project?.Name))
             {
@@ -140,7 +161,7 @@ namespace WorQLess
             return retorno;
         }
 
-        public IEnumerable<U> ApplyProjection<T, U>(IEnumerable<T> collection)
+        public virtual IEnumerable<U> ApplyProjection<T, U>(IEnumerable<T> collection)
         {
             if (string.IsNullOrEmpty(Request.Project?.Name))
             {
@@ -156,7 +177,7 @@ namespace WorQLess
             return retorno;
         }
 
-        public IEnumerable<X> ApplyEvaluate<X>(IQueryable<X> collection)
+        public virtual IEnumerable<X> ApplyEvaluate<X>(IQueryable<X> collection)
         {
             if (Evaluate)
             {
@@ -168,7 +189,7 @@ namespace WorQLess
             return collection;
         }
 
-        public IEnumerable<X> ApplyEvaluate<X>(IEnumerable<X> collection)
+        public virtual IEnumerable<X> ApplyEvaluate<X>(IEnumerable<X> collection)
         {
             if (Evaluate)
             {

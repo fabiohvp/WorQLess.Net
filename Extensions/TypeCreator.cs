@@ -6,33 +6,16 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using WorQLess.Boosters;
+using WorQLess.Models;
+using WorQLess.Requests;
 
-namespace WorQLess
+namespace WorQLess.Extensions
 {
     public class TypeCreator
     {
-        public static List<KeyValuePair<string, IBooster>> Boosters;
         private Dictionary<string, Type> BuiltTypes;
 
         public virtual ModuleBuilder ModuleBuilder { get; set; }
-
-        static TypeCreator()
-        {
-            Boosters = new List<KeyValuePair<string, IBooster>>
-            {
-                new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "as", new AsBooster()),
-                new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "count", new CountBooster()),
-				//new KeyValuePair<string, IBooster>(BoosterPrefix + "implements", new ImplementsBooster()), //not working yet
-				new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "orderByAsc", new OrderByAscBooster()),
-                new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "orderByDesc", new OrderByDescBooster()),
-                new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "projectAs", new ProjectAsBooster()),
-				//new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "selectMany", new SelectManyBooster()), //parameter is wrong
-				new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "select", new SelectBooster()),
-                new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "sum", new SumBooster()),
-                new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "take", new TakeBooster()),
-                new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "where", new WhereBooster()),
-            };
-        }
 
         public TypeCreator(string assemblyName)
         {
@@ -45,24 +28,57 @@ namespace WorQLess
             //moduleBuilder = Thread.GetDomain().DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run).DefineDynamicModule(assemblyName.Name);
         }
 
-        public IFieldExpression BuildExpression(Type sourceType, JArray jArray, bool x = true)
+        public virtual IFieldExpression BuildExpression(Type sourceType, JArray jArray, bool createAnonymousProjection = true)
         {
-            var initialParameter = Expression.Parameter(sourceType, string.Empty);
-            Expression body = initialParameter;
+            var parameter = Expression.Parameter(sourceType, string.Empty);
+            Expression body = parameter;
 
             var fields = new Dictionary<string, IFieldExpression>();
-            GetExpressionFromArray(sourceType, fields, jArray, sourceType, body, initialParameter, "o");
+            GetExpressionFromArray(sourceType, fields, jArray, sourceType, body, parameter, "o");
 
-            if (x)
+            if (createAnonymousProjection)
             {
                 var dynamicType = CreateInstanceType(fields);
                 body = CreateInstance(fields, dynamicType);
-                return new FieldExpression(body, initialParameter, dynamicType);
+                return new FieldExpression(body, parameter, dynamicType);
             }
+
             return fields[fields.Select(o => o.Key).First()];
         }
 
-        public IFieldExpression GetExpressionFromValue(Type sourceType, JValue jValue, Type type, Expression expression, ParameterExpression initialParameter)
+        public virtual IFieldExpression BuildExpression(Type sourceType, ProjectionRequest projectionRequest)
+        {
+            var returnType = sourceType;
+
+            if (!string.IsNullOrEmpty(projectionRequest?.Name))
+            {
+                var projectionType = projectionRequest.Type;
+
+                if (typeof(IWorQLessDynamicProjection).IsAssignableFrom(projectionType))
+                {
+                    var queryType = typeof(IQueryable<>).MakeGenericType(sourceType);
+                    var parameter = Expression.Parameter(queryType);
+                    Expression body = parameter;
+                    var args = (JArray)projectionRequest.Args;
+                    var firstArg = new JArray(args.First());
+
+                    var booster = new SelectBooster();
+                    var selectProjection = booster.Select(WQL.TypeCreator, sourceType, firstArg, body, parameter);
+                    var otherArgs = new JArray(args.Skip(1));
+                    var otherProjections = WQL.TypeCreator.BuildExpression(selectProjection.Expression.Type, otherArgs, false);
+
+                    return selectProjection.Combine(otherProjections, parameter);
+                }
+                else if (typeof(IWorQLessProjection).IsAssignableFrom(projectionType))
+                {
+                    return WQL.TypeCreator.BuildExpression(sourceType, (JArray)projectionRequest.Args);
+                }
+            }
+
+            return default(IFieldExpression);
+        }
+
+        public virtual IFieldExpression GetExpressionFromValue(Type sourceType, JValue jValue, Type type, Expression expression, ParameterExpression parameter)
         {
             var name = jValue.Value.ToString();
             var propertyInfo = type.GetProperty(name);
@@ -77,61 +93,49 @@ namespace WorQLess
             }
 
             var _expression = Expression.Property(expression, name);
-            return new FieldExpression(_expression, initialParameter);
+            return new FieldExpression(_expression, parameter);
         }
 
-        public Dictionary<string, IFieldExpression> GetExpressionFromObject(Type sourceType, JObject jObject, Type type, Expression expression, ParameterExpression initialParameter, string level)
+        public virtual Dictionary<string, IFieldExpression> GetExpressionFromObject(Type sourceType, JObject jObject, Type type, Expression expression, ParameterExpression parameter, string level)
         {
             var fields = new Dictionary<string, IFieldExpression>();
-            GetExpressionFromObject(sourceType, fields, jObject, type, expression, initialParameter, level);
+            GetExpressionFromObject(sourceType, fields, jObject, type, expression, parameter, level);
             return fields;
         }
 
-        public void GetExpressionFromObject(Type sourceType, Dictionary<string, IFieldExpression> fields, JObject jObject, Type type, Expression expression, ParameterExpression initialParameter, string level)
+        public virtual void GetExpressionFromObject(Type sourceType, Dictionary<string, IFieldExpression> fields, JObject jObject, Type type, Expression expression, ParameterExpression parameter, string level)
         {
             var properties = jObject.Properties();
 
             foreach (var property in properties)
             {
-                GetExpressionFromProperty(sourceType, fields, property, type, expression, initialParameter, level);
+                GetExpressionFromProperty(sourceType, fields, property, type, expression, parameter, level);
             }
         }
 
-        public IBooster GetBooster(string name)
+        public virtual void GetExpressionFromProperty(Type sourceType, Dictionary<string, IFieldExpression> fields, JProperty property, Type type, Expression expression, ParameterExpression parameter, string level)
         {
-            var booster = Boosters
-                .Where(o => name.StartsWith(o.Key))
-                .Select(o => o.Value)
-                .FirstOrDefault();
-
-            return booster;
-        }
-
-        public void GetExpressionFromProperty(Type sourceType, Dictionary<string, IFieldExpression> fields, JProperty property, Type type, Expression expression, ParameterExpression initialParameter, string level)
-        {
-            var booster = GetBooster(property.Name);
-
-            if (booster != default(IBooster))
+            if (WQL.Boosters.ContainsKey(property.Name))
             {
-                booster.Boost(this, sourceType, type, fields, property, expression, initialParameter);
+                WQL.Boosters[property.Name].Boost(this, sourceType, type, fields, property, expression, parameter);
             }
             else if (property.Value is JValue)
             {
                 var jValue = (JValue)property.Value;
-                var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, initialParameter);
+                var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, parameter);
                 fields.Add(property.Name, fieldValue);
             }
             else if (property.Value is JObject)
             {
                 var _jObject = (JObject)property.Value;
-                var _fields = GetExpressionFromObject(sourceType, _jObject, type, expression, initialParameter, level);
+                var _fields = GetExpressionFromObject(sourceType, _jObject, type, expression, parameter, level);
                 var instanceType = CreateInstanceType(_fields);
                 var instance = CreateInstance(_fields, instanceType);
 
                 fields.Add
                 (
                     property.Name,
-                    new FieldExpression(instance, initialParameter, instanceType)
+                    new FieldExpression(instance, parameter, instanceType)
                 );
             }
             else if (property.Value is JArray)
@@ -145,7 +149,7 @@ namespace WorQLess
                 var _type = type.GetProperty(property.Name).PropertyType;
                 var jArray = (JArray)property.Value;
                 var _fields = new Dictionary<string, IFieldExpression>();
-                GetExpressionFromArray(sourceType, _fields, jArray, _type, _expression, initialParameter, level + level);
+                GetExpressionFromArray(sourceType, _fields, jArray, _type, _expression, parameter, level + level);
 
                 foreach (var _field in _fields)
                 {
@@ -154,28 +158,28 @@ namespace WorQLess
             }
         }
 
-        public void GetExpressionFromArray(Type sourceType, Dictionary<string, IFieldExpression> fields, JArray jArray, Type type, Expression expression, ParameterExpression initialParameter, string level)
+        public virtual void GetExpressionFromArray(Type sourceType, Dictionary<string, IFieldExpression> fields, JArray jArray, Type type, Expression expression, ParameterExpression parameter, string level)
         {
             foreach (var item in jArray)
             {
                 if (item is JValue)
                 {
                     var jValue = (JValue)item;
-                    var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, initialParameter);
+                    var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, parameter);
                     fields.Add(jValue.ToString(), fieldValue);
                 }
                 else if (item is JObject)
                 {
-                    GetExpressionFromObject(sourceType, fields, (JObject)item, type, expression, initialParameter, level);
+                    GetExpressionFromObject(sourceType, fields, (JObject)item, type, expression, parameter, level);
                 }
                 else if (item is JArray)
                 {
-                    GetExpressionFromArray(sourceType, fields, (JArray)item, type, expression, initialParameter, level);
+                    GetExpressionFromArray(sourceType, fields, (JArray)item, type, expression, parameter, level);
                 }
             }
         }
 
-        public Expression CreateInstance(Dictionary<string, IFieldExpression> properties, Type dynamicType)
+        public virtual Expression CreateInstance(Dictionary<string, IFieldExpression> properties, Type dynamicType)
         {
             var members = properties
                 .ToDictionary(o => o.Key, o => o.Value);
@@ -190,7 +194,7 @@ namespace WorQLess
             return instanceWithProperties;
         }
 
-        public Type CreateInstanceType(IDictionary<string, IFieldExpression> properties)
+        public virtual Type CreateInstanceType(IDictionary<string, IFieldExpression> properties)
         {
             var fields = properties
                 .ToDictionary(o => o.Key, o => o.Value.ReturnType);
@@ -248,7 +252,7 @@ namespace WorQLess
             return BuiltTypes[className];
         }
 
-        public string GetClassName(Dictionary<string, Type> fields, string nestedPrefix = "_")
+        public virtual string GetClassName(Dictionary<string, Type> fields, string nestedPrefix = "_")
         {
             //TODO: optimize the type caching -- if fields are simply reordered, that doesn't mean that they're actually different types, so this needs to be smarter
             var key = string.Empty;

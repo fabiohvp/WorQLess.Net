@@ -2,13 +2,14 @@
 using System;
 using System.Linq.Expressions;
 using WorQLess.Attributes;
+using WorQLess.Models;
 
 namespace WorQLess.Rules
 {
 
     [Expose]
     public class GreaterThanRule<T> : IProjection<T, bool>
-        , IWorQLessDynamic
+        , IWorQLessProjection
         , IWorQLessRuleBooster
     {
         public virtual IFieldExpression FieldExpression { get; set; }

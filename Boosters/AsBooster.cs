@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using WorQLess.Extensions;
+using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
@@ -16,7 +18,7 @@ namespace WorQLess.Boosters
             IDictionary<string, IFieldExpression> fields,
             JProperty property,
             Expression expression,
-            ParameterExpression initialParameter
+            ParameterExpression parameter
         )
         {
             if (fields.Any())
@@ -38,7 +40,7 @@ namespace WorQLess.Boosters
                 // fields.Add
                 //(
                 //    property.Value.ToString(),
-                //    new FieldExpression(expression, initialParameter)
+                //    new FieldExpression(expression, parameter)
                 //);
             }
         }

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using WorQLess.Extensions;
+using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
@@ -28,7 +29,7 @@ namespace WorQLess.Boosters
                 .GetMethod(nameof(ApplyOperand), BindingFlags.NonPublic | BindingFlags.Static);
         }
 
-        public IFieldExpression BuildExpression(TypeCreator typeCreator, JArray jArray, Type returnType, ParameterExpression initialParameter)
+        public IFieldExpression BuildExpression(TypeCreator typeCreator, JArray jArray, Type returnType, ParameterExpression parameter)
         {
             var expression = GetRuleContainer(typeCreator, (JObject)jArray.First(), returnType);
 
@@ -43,7 +44,7 @@ namespace WorQLess.Boosters
                     .Invoke(null, new object[] { props, expression, __expression });
             }
 
-            return new FieldExpression(expression, initialParameter);
+            return new FieldExpression(expression, parameter);
         }
 
         public virtual void Boost
@@ -54,14 +55,14 @@ namespace WorQLess.Boosters
             IDictionary<string, IFieldExpression> fields,
             JProperty property,
             Expression expression,
-            ParameterExpression initialParameter
+            ParameterExpression parameter
         )
         {
             if (fields.Any())
             {
                 var lastField = fields.Last();
                 var returnType = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
-                var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, initialParameter)
+                var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, parameter)
                     .Expression;
                 var method = WhereMethod
                     .MakeGenericMethod(returnType);
@@ -73,13 +74,13 @@ namespace WorQLess.Boosters
                 );
 
                 fields.Remove(lastField.Key);
-                var fieldValue = new FieldExpression(whereExpression, initialParameter);
+                var fieldValue = new FieldExpression(whereExpression, parameter);
                 fields.Add(property.Name, fieldValue);
             }
             else
             {
                 var returnType = expression.Type.GetGenericArguments().LastOrDefault();
-                var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, initialParameter)
+                var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, parameter)
                     .Expression;
                 var method = WhereMethod
                     .MakeGenericMethod(returnType);
@@ -90,7 +91,7 @@ namespace WorQLess.Boosters
                     _expression
                 );
 
-                var fieldValue = new FieldExpression(whereExpression, initialParameter);
+                var fieldValue = new FieldExpression(whereExpression, parameter);
                 fields.Add(property.Name, fieldValue);
             }
         }

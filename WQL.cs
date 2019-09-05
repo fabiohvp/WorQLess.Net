@@ -3,39 +3,21 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Reflection;
+using WorQLess.Boosters;
+using WorQLess.Extensions;
+using WorQLess.Models;
+using WorQLess.Net.Extensions;
 using WorQLess.Requests;
 using WorQLess.Rules;
 using WorQLess.Workflows;
 
 namespace WorQLess
 {
-    public static class Extensions2
-    {
-        public static List<PropertyInfo> GetDbSetProperties(this DbContext context)
-        {
-            var dbSetProperties = new List<PropertyInfo>();
-            var properties = context.GetType().GetProperties();
-
-            foreach (var property in properties)
-            {
-                var setType = property.PropertyType;
-
-                var isDbSet = setType.IsGenericType && (typeof(IDbSet<>).IsAssignableFrom(setType.GetGenericTypeDefinition()) || setType.GetInterface(typeof(IDbSet<>).FullName) != null);
-
-                if (isDbSet)
-                {
-                    dbSetProperties.Add(property);
-                }
-            }
-
-            return dbSetProperties;
-        }
-    }
-
     public class WQL
     {
         public static TypeCreator TypeCreator;
         public static string BoosterPrefix;
+        internal static IDictionary<string, IBooster> Boosters;
         internal static IDictionary<string, Type> ProjectionsTypes;
         internal static IDictionary<string, Type> RulesTypes;
         internal static IDictionary<string, Type> WorkflowsTypes;
@@ -52,17 +34,31 @@ namespace WorQLess
             Limit = 500;
 
             TypeCreator = new TypeCreator("WorQLessDynamicAssembly");
+            Boosters = new Dictionary<string, IBooster>
+            {
+                { BoosterPrefix + "as", new AsBooster() },
+                { BoosterPrefix + "count", new CountBooster() },
+				//new KeyValuePair<string, IBooster>(BoosterPrefix + "implements", new ImplementsBooster()), //not working yet
+				{ BoosterPrefix + "orderByAsc", new OrderByAscBooster() },
+                { BoosterPrefix + "orderByDesc", new OrderByDescBooster() },
+                { BoosterPrefix + "projectAs", new ProjectAsBooster() },
+				//new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "selectMany", new SelectManyBooster()}, //parameter is wrong
+				{ BoosterPrefix + "select", new SelectBooster() },
+                { BoosterPrefix + "sum", new SumBooster() },
+                { BoosterPrefix + "take", new TakeBooster() },
+                { BoosterPrefix + "where", new WhereBooster() }
+            };
             ProjectionsTypes = new Dictionary<string, Type>
             {
                 { BoosterPrefix + "Select", typeof(SelectProjection<,>)}
             };
             RulesTypes = new Dictionary<string, Type>
             {
-                { BoosterPrefix + "==", typeof(EqualRule<>) },
-                { BoosterPrefix + "<=", typeof(LessThanOrEqualRule<>) },
-                { BoosterPrefix + "<", typeof(LessThanRule<>) },
-                { BoosterPrefix + ">=", typeof(GreaterThanOrEqualRule<>) },
-                { BoosterPrefix + ">", typeof(GreaterThanRule<>) }
+                { "==", typeof(EqualRule<>) },
+                { "<=", typeof(LessThanOrEqualRule<>) },
+                { "<", typeof(LessThanRule<>) },
+                { ">=", typeof(GreaterThanOrEqualRule<>) },
+                { ">", typeof(GreaterThanRule<>) }
             };
             WorkflowsTypes = new Dictionary<string, Type>
             {
@@ -74,11 +70,6 @@ namespace WorQLess
         public WQL(object context)
         {
             Context = (DbContext)context;
-            //        Tables = context.GetDbSetProperties()
-            //.Select(o => o.PropertyType)
-            //.Where(o => o.GetCustomAttribute<NotExposeAttribute>() == null)
-            //.ToDictionary(o => o.Name.ToLower(), o => o);
-
             var tables = Context.GetDbSetProperties();
 
             foreach (var table in tables)

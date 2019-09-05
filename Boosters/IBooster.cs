@@ -2,6 +2,8 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using WorQLess.Extensions;
+using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
@@ -22,9 +24,9 @@ namespace WorQLess.Boosters
             JProperty property,
             //current expression (o => o.Name) //expression = o.Name
             Expression expression,
-            //initial lambda parameter (o => o.Name) //initialParameter = o
+            //initial lambda parameter (o => o.Name) //parameter = o
             //this is used when you want to convert you current expression to lambda expression (IFieldExpression.GetLambdaExpression())
-            ParameterExpression initialParameter
+            ParameterExpression parameter
         );
     }
 }
