@@ -75,7 +75,6 @@
     <Compile Include="Extensions\Reflection.cs" />
     <Compile Include="Extensions\Type.cs" />
     <Compile Include="FieldExpression.cs" />
-    <Compile Include="IDynamicProjection.cs" />
     <Compile Include="IRawArguments.cs" />
     <Compile Include="IWorQLessWorkflow.cs" />
     <Compile Include="Projections\SelectProjection.cs" />
@@ -96,7 +95,6 @@
     <Compile Include="WorkflowContainer.cs" />
     <Compile Include="WorkflowOperand.cs" />
     <Compile Include="Workflows\SelectWorkflow.cs" />
-    <Compile Include="Workflows\WQLWorkflow.cs" />
     <Compile Include="WQL.cs" />
   </ItemGroup>
   <ItemGroup>
