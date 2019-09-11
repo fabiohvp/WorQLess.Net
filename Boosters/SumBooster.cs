@@ -9,7 +9,7 @@ using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
-    public class SumBooster : IBooster
+    public class SumBooster : Booster
     {
         private static MethodInfo SumMethod;
 
@@ -25,7 +25,7 @@ namespace WorQLess.Boosters
                 );
         }
 
-        public virtual void Boost
+        public override void Boost
         (
             TypeCreator typeCreator,
             Type sourceType,
@@ -54,8 +54,11 @@ namespace WorQLess.Boosters
                     projection.GetLambdaExpression()
                 );
 
+                var fieldValue = (IFieldExpression)new FieldExpression(_expression, parameter);
+                fieldValue = fieldValue.Combine(lastField.Value, parameter);
+                fieldValue.Parameter = lastField.Value.Parameter;
+
                 fields.Remove(lastField.Key);
-                var fieldValue = new FieldExpression(_expression, parameter);
                 fields.Add(property.Name, fieldValue);
             }
             else

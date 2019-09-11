@@ -77,8 +77,10 @@ namespace WorQLess.Models
 
         public IFieldExpression Combine(IFieldExpression other, ParameterExpression parameter)
         {
-            var inner = GetLambdaExpression();
-            var outer = other.GetLambdaExpression();
+            var outer = GetLambdaExpression();
+            var inner = other.GetLambdaExpression();
+            //var inner = GetLambdaExpression();
+            //var outer = other.GetLambdaExpression();
             var visitor = new SwapVisitor(outer.Parameters[0], inner.Body);
             var expression = visitor.Visit(outer.Body);
             return new FieldExpression(expression, parameter);

@@ -10,7 +10,7 @@ using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
-    public class WhereBooster : IBooster
+    public class WhereBooster : Booster
     {
         private static readonly MethodInfo WhereMethod;
         private static readonly MethodInfo ApplyOperandMethod;
@@ -29,25 +29,25 @@ namespace WorQLess.Boosters
                 .GetMethod(nameof(ApplyOperand), BindingFlags.NonPublic | BindingFlags.Static);
         }
 
-        public IFieldExpression BuildExpression(TypeCreator typeCreator, JArray jArray, Type returnType, ParameterExpression parameter)
+        public override IFieldExpression Boost2(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression parameter)
         {
-            var expression = GetRuleContainer(typeCreator, (JObject)jArray.First(), returnType);
+            expression = GetRuleContainer(typeCreator, (JObject)jArray.First(), propertyType);
 
             foreach (JObject jObject in jArray.Skip(1))
             {
                 var props = jObject.Properties()
                     .ToDictionary(o => o.Name, o => o.Value);
-                var __expression = GetRuleContainer(typeCreator, props, returnType);
+                var __expression = GetRuleContainer(typeCreator, props, propertyType);
 
                 expression = (Expression)ApplyOperandMethod
-                    .MakeGenericMethod(returnType)
+                    .MakeGenericMethod(propertyType)
                     .Invoke(null, new object[] { props, expression, __expression });
             }
 
             return new FieldExpression(expression, parameter);
         }
 
-        public virtual void Boost
+        public override void Boost
         (
             TypeCreator typeCreator,
             Type sourceType,
@@ -62,7 +62,7 @@ namespace WorQLess.Boosters
             {
                 var lastField = fields.Last();
                 var returnType = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
-                var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, parameter)
+                var _expression = Boost2(typeCreator, returnType, (JArray)property.Value, expression, parameter)
                     .Expression;
                 var method = WhereMethod
                     .MakeGenericMethod(returnType);
@@ -80,7 +80,7 @@ namespace WorQLess.Boosters
             else
             {
                 var returnType = expression.Type.GetGenericArguments().LastOrDefault();
-                var _expression = BuildExpression(typeCreator, (JArray)property.Value, returnType, parameter)
+                var _expression = Boost2(typeCreator, returnType, (JArray)property.Value, expression, parameter)
                     .Expression;
                 var method = WhereMethod
                     .MakeGenericMethod(returnType);

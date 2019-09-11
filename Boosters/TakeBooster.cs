@@ -9,7 +9,7 @@ using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
-    public class TakeBooster : IBooster
+    public class TakeBooster : Booster
     {
         private static MethodInfo TakeMethod;
 
@@ -21,7 +21,7 @@ namespace WorQLess.Boosters
                 .GetMethod(nameof(Queryable.Take));
         }
 
-        public virtual void Boost
+        public override void Boost
         (
             TypeCreator typeCreator,
             Type sourceType,

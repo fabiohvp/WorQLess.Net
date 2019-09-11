@@ -9,9 +9,9 @@ using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
-    public class ProjectAsBooster : IBooster
+    public class ProjectAsBooster : Booster
     {
-        public virtual void Boost
+        public override void Boost
         (
             TypeCreator typeCreator,
             Type sourceType,

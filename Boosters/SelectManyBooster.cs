@@ -9,9 +9,9 @@ using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
-    public class SelectManyBooster : IBooster
+    public class SelectManyBooster : Booster
     {
-        private static MethodInfo SelectManyMethod;
+        private static readonly MethodInfo SelectManyMethod;
         private static readonly MethodInfo ToListMethod;
 
         static SelectManyBooster()
@@ -28,12 +28,8 @@ namespace WorQLess.Boosters
                 .First(o => o.Name == nameof(Enumerable.ToList));
         }
 
-        private FieldExpression Select(TypeCreator typeCreator, PropertyInfo propertyInfo, JProperty property, Expression expression, ParameterExpression parameter)
+        public override IFieldExpression Boost2(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression parameter)
         {
-            var _expression = Expression.Property(expression, propertyInfo);
-            var propertyType = propertyInfo.PropertyType.GetGenericArguments().LastOrDefault();
-
-            var jArray = (JArray)property.Value;
             var projection = typeCreator.BuildExpression(propertyType, jArray, false);
             var type = projection.ReturnType.GetGenericArguments().LastOrDefault();
 
@@ -44,7 +40,7 @@ namespace WorQLess.Boosters
             var selectExpression = Expression.Call
             (
                 method,
-                _expression,
+                expression,
                 projection.GetLambdaExpression()
             );
 
@@ -63,7 +59,7 @@ namespace WorQLess.Boosters
             //return new FieldExpression(toListExpression, projection.Parameter);
         }
 
-        public virtual void Boost
+        public override void Boost
         (
             TypeCreator typeCreator,
             Type sourceType,
@@ -78,7 +74,9 @@ namespace WorQLess.Boosters
             var properties = jObject.Properties();
             var _property = properties.First();
             var propertyInfo = propertyType.GetProperty(_property.Name);
-            var fieldValue = Select(typeCreator, propertyInfo, _property, expression, parameter);
+            var _expression = Expression.Property(expression, propertyInfo);
+            var _propertyType = propertyInfo.PropertyType.GetGenericArguments().LastOrDefault();
+            var fieldValue = Boost2(typeCreator, _propertyType, (JArray)_property.Value, _expression, parameter);
             fields.Add(_property.Name, fieldValue);
         }
     }

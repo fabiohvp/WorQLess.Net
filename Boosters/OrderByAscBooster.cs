@@ -9,7 +9,7 @@ using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
-    public class OrderByAscBooster : IBooster
+    public class OrderByAscBooster : Booster
     {
         private static MethodInfo OrderByMethod;
 
@@ -24,7 +24,7 @@ namespace WorQLess.Boosters
                 );
         }
 
-        public virtual void Boost
+        public override void Boost
         (
             TypeCreator typeCreator,
             Type sourceType,

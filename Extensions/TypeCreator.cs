@@ -60,10 +60,17 @@ namespace WorQLess.Extensions
                     var parameter = Expression.Parameter(queryType);
                     Expression body = parameter;
                     var args = (JArray)projectionRequest.Args;
-                    var firstArg = new JArray(args.First());
 
+                    var z = BuildExpression(sourceType, args, false);
+
+                    return z;
+
+
+
+
+                    var firstArg = new JArray(args.First());
                     var booster = new SelectBooster();
-                    var selectProjection = booster.Select(WQL.TypeCreator, sourceType, firstArg, body, parameter);
+                    var selectProjection = booster.Boost2(WQL.TypeCreator, sourceType, firstArg, body, parameter);
 
                     if (args.Count > 1)
                     {
@@ -125,9 +132,11 @@ namespace WorQLess.Extensions
 
         public virtual void GetExpressionFromProperty(Type sourceType, Dictionary<string, IFieldExpression> fields, JProperty property, Type type, Expression expression, ParameterExpression parameter, string level)
         {
-            if (WQL.Boosters.ContainsKey(property.Name))
+            var propertyName = property.Name.TrimEnd('_');
+
+            if (WQL.Boosters.ContainsKey(propertyName))
             {
-                WQL.Boosters[property.Name].Boost(this, sourceType, type, fields, property, expression, parameter);
+                WQL.Boosters[propertyName].Boost(this, sourceType, type, fields, property, expression, parameter);
             }
             else if (property.Value is JValue)
             {

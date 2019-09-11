@@ -61,6 +61,7 @@
     <Compile Include="Attributes\ExposeAttribute.cs" />
     <Compile Include="Attributes\NotExposeAttribute.cs" />
     <Compile Include="Boosters\AsBooster.cs" />
+    <Compile Include="Boosters\Booster.cs" />
     <Compile Include="Boosters\IBooster.cs" />
     <Compile Include="Boosters\ImplementsBooster.cs" />
     <Compile Include="Boosters\OrderByDescBooster.cs" />
@@ -81,7 +82,6 @@
     <Compile Include="Models\IWorQLessProjection.cs" />
     <Compile Include="Models\IWorQLessRule.cs" />
     <Compile Include="Models\IWorQLessWorkflow.cs" />
-    <Compile Include="Projections\ProjectionFactory.cs" />
     <Compile Include="Projections\SelectProjection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Requests\IRequest.cs" />

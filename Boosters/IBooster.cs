@@ -28,5 +28,7 @@ namespace WorQLess.Boosters
             //this is used when you want to convert you current expression to lambda expression (IFieldExpression.GetLambdaExpression())
             ParameterExpression parameter
         );
+
+        IFieldExpression Boost2(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression parameter);
     }
 }
