@@ -28,13 +28,13 @@ namespace WorQLess.Extensions
             //moduleBuilder = Thread.GetDomain().DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run).DefineDynamicModule(assemblyName.Name);
         }
 
-        public virtual IFieldExpression BuildExpression(Type sourceType, JArray jArray, bool createAnonymousProjection = true)
+        public virtual IFieldExpression BuildExpression(Type sourceType, JArray jArray, bool createAnonymousProjection = true, bool isolate = false)
         {
             var parameter = Expression.Parameter(sourceType, string.Empty);
             Expression body = parameter;
 
             var fields = new Dictionary<string, IFieldExpression>();
-            GetExpressionFromArray(sourceType, fields, jArray, sourceType, body, parameter, "o");
+            GetExpressionFromArray(sourceType, fields, jArray, sourceType, body, parameter, "o", isolate);
 
             if (!createAnonymousProjection && fields.Count == 1)
             {
@@ -46,7 +46,7 @@ namespace WorQLess.Extensions
             return new FieldExpression(body, parameter, dynamicType);
         }
 
-        public virtual IFieldExpression BuildExpression(Type sourceType, ProjectionRequest projectionRequest)
+        public virtual IFieldExpression BuildExpression(Type sourceType, IProjectionRequest projectionRequest)
         {
             var returnType = sourceType;
 
@@ -113,14 +113,14 @@ namespace WorQLess.Extensions
             return new FieldExpression(_expression, parameter);
         }
 
-        public virtual Dictionary<string, IFieldExpression> GetExpressionFromObject(Type sourceType, JObject jObject, Type type, Expression expression, ParameterExpression parameter, string level)
+        public virtual IDictionary<string, IFieldExpression> GetExpressionFromObject(Type sourceType, JObject jObject, Type type, Expression expression, ParameterExpression parameter, string level)
         {
             var fields = new Dictionary<string, IFieldExpression>();
             GetExpressionFromObject(sourceType, fields, jObject, type, expression, parameter, level);
             return fields;
         }
 
-        public virtual void GetExpressionFromObject(Type sourceType, Dictionary<string, IFieldExpression> fields, JObject jObject, Type type, Expression expression, ParameterExpression parameter, string level)
+        public virtual void GetExpressionFromObject(Type sourceType, IDictionary<string, IFieldExpression> fields, JObject jObject, Type type, Expression expression, ParameterExpression parameter, string level)
         {
             var properties = jObject.Properties();
 
@@ -130,7 +130,7 @@ namespace WorQLess.Extensions
             }
         }
 
-        public virtual void GetExpressionFromProperty(Type sourceType, Dictionary<string, IFieldExpression> fields, JProperty property, Type type, Expression expression, ParameterExpression parameter, string level)
+        public virtual void GetExpressionFromProperty(Type sourceType, IDictionary<string, IFieldExpression> fields, JProperty property, Type type, Expression expression, ParameterExpression parameter, string level)
         {
             var propertyName = property.Name.TrimEnd('_');
 
@@ -161,7 +161,10 @@ namespace WorQLess.Extensions
             {
                 if (type.GetProperty(property.Name).GetCustomAttribute<NotExposeAttribute>() != null)
                 {
-                    throw new MissingFieldException($"{property.Path} does not exist or is not exposed");
+                    if (!typeof(IGrouping<,>).IsAssignableFrom(type))
+                    {
+                        throw new MissingFieldException($"{property.Path} does not exist or is not exposed");
+                    }
                 }
 
                 var _expression = Expression.Property(expression, property.Name);
@@ -177,28 +180,43 @@ namespace WorQLess.Extensions
             }
         }
 
-        public virtual void GetExpressionFromArray(Type sourceType, Dictionary<string, IFieldExpression> fields, JArray jArray, Type type, Expression expression, ParameterExpression parameter, string level)
+        public virtual void GetExpressionFromArray(Type sourceType, IDictionary<string, IFieldExpression> fields, JArray jArray, Type type, Expression expression, ParameterExpression parameter, string level, bool isolate = false)
         {
             foreach (var item in jArray)
             {
+                var _fields = fields;
+
+                if (isolate)
+                {
+                    _fields = new Dictionary<string, IFieldExpression>();
+                }
+
                 if (item is JValue)
                 {
                     var jValue = (JValue)item;
                     var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, parameter);
-                    fields.Add(jValue.ToString(), fieldValue);
+                    _fields.Add(jValue.ToString(), fieldValue);
                 }
                 else if (item is JObject)
                 {
-                    GetExpressionFromObject(sourceType, fields, (JObject)item, type, expression, parameter, level);
+                    GetExpressionFromObject(sourceType, _fields, (JObject)item, type, expression, parameter, level);
                 }
                 else if (item is JArray)
                 {
-                    GetExpressionFromArray(sourceType, fields, (JArray)item, type, expression, parameter, level);
+                    GetExpressionFromArray(sourceType, _fields, (JArray)item, type, expression, parameter, level);
+                }
+
+                if (isolate)
+                {
+                    foreach (var _field in _fields)
+                    {
+                        fields.Add(_field.Key, _field.Value);
+                    }
                 }
             }
         }
 
-        public virtual Expression CreateInstance(Dictionary<string, IFieldExpression> properties, Type dynamicType)
+        public virtual Expression CreateInstance(IDictionary<string, IFieldExpression> properties, Type dynamicType)
         {
             var members = properties
                 .ToDictionary(o => o.Key, o => o.Value);

@@ -74,6 +74,44 @@ namespace WorQLess.Boosters
             //return new FieldExpression(toListExpression, projection.Parameter);
         }
 
+        private IFieldExpression Boost3
+        (
+            TypeCreator typeCreator,
+            Type queryType,
+            Type propertyType,
+            ParameterExpression parameter,
+            IProjectionRequest projectionRequest
+        )
+        {
+            var projection = typeCreator.BuildExpression(propertyType, projectionRequest);
+            Expression expression = parameter;
+
+            if (expression.Type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+            {
+                var asQueryableMethod = AsQueryableMethod
+                    .MakeGenericMethod(propertyType);
+
+                expression = Expression.Call
+                (
+                    asQueryableMethod,
+                    expression
+                );
+            }
+
+            var method = SelectMethod
+                .MakeGenericMethod(propertyType, projection.ReturnType);
+
+            var selectExpression = Expression.Call
+            (
+                method,
+                expression,
+                projection.GetLambdaExpression()
+            );
+
+            var fieldValue = new FieldExpression(selectExpression, parameter);
+            return fieldValue;
+        }
+
         public override void Boost
         (
             TypeCreator typeCreator,
@@ -95,39 +133,21 @@ namespace WorQLess.Boosters
 
                 if (fields.Any())
                 {
-                    var lastKey = fields.Select(o => o.Key).Last();
+                    var lastKey = fields.Select(o => o.Key).First();
                     var lastField = fields[lastKey];
                     var queryType = lastField.ReturnType;//.GetGenericArguments().LastOrDefault();
                     var _parameter = Expression.Parameter(queryType);
-                    Expression body = _parameter;
-
                     propertyType = queryType.GetGenericArguments().LastOrDefault();
-                    var projection = typeCreator.BuildExpression(propertyType, projectionRequest);
-                    var _expression = body;
 
-                    if (_expression.Type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
-                    {
-                        var asQueryableMethod = AsQueryableMethod
-                            .MakeGenericMethod(propertyType);
-
-                        _expression = Expression.Call
-                        (
-                            asQueryableMethod,
-                            _expression
-                        );
-                    }
-
-                    var method = SelectMethod
-                        .MakeGenericMethod(propertyType, projection.ReturnType);
-
-                    var selectExpression = Expression.Call
+                    var fieldValue = Boost3
                     (
-                        method,
-                        _expression,
-                        projection.GetLambdaExpression()
+                        typeCreator,
+                        queryType,
+                        propertyType,
+                        _parameter,
+                        projectionRequest
                     );
 
-                    var fieldValue = (IFieldExpression)new FieldExpression(selectExpression, _parameter);
                     fieldValue = fieldValue.Combine(lastField, _parameter);
                     fieldValue.Parameter = lastField.Parameter;
 
@@ -138,33 +158,17 @@ namespace WorQLess.Boosters
                 {
                     var queryType = typeof(IQueryable<>).MakeGenericType(sourceType);
                     var _parameter = Expression.Parameter(queryType);
-                    Expression body = _parameter;
-                    var projection = typeCreator.BuildExpression(propertyType, projectionRequest);
-                    var _expression = body;
 
-                    if (_expression.Type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
-                    {
-                        var asQueryableMethod = AsQueryableMethod
-                            .MakeGenericMethod(propertyType);
-
-                        _expression = Expression.Call
-                        (
-                            asQueryableMethod,
-                            _expression
-                        );
-                    }
-
-                    var method = SelectMethod
-                        .MakeGenericMethod(propertyType, projection.ReturnType);
-
-                    var selectExpression = Expression.Call
+                    var fieldValue = Boost3
                     (
-                        method,
-                        _expression,
-                        projection.GetLambdaExpression()
+                        typeCreator,
+                        queryType,
+                        propertyType,
+                        _parameter,
+                        projectionRequest
                     );
 
-                    fields.Add(property.Name, new FieldExpression(selectExpression, _parameter));
+                    fields.Add(property.Name, fieldValue);
                 }
             }
             else
@@ -188,7 +192,7 @@ namespace WorQLess.Boosters
                     }
                     else
                     {
-                        throw new InvalidOperationException("$select first property is you query and additional properties must be boosters");
+                        throw new InvalidOperationException("$select - first property is your query and additional properties must be boosters");
                     }
                 }
 

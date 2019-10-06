@@ -74,7 +74,7 @@ namespace WorQLess.Boosters
                 );
 
                 fields.Remove(lastField.Key);
-                var fieldValue = new FieldExpression(whereExpression, parameter);
+                var fieldValue = new FieldExpression(whereExpression, lastField.Value.Parameter);
                 fields.Add(property.Name, fieldValue);
             }
             else

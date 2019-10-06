@@ -50,12 +50,18 @@ namespace WorQLess.Boosters
                 );
 
                 fields.Remove(lastField.Key);
-                var fieldValue = new FieldExpression(_expression, parameter);
+                var fieldValue = new FieldExpression(_expression, lastField.Value.Parameter);
                 fields.Add(property.Name, fieldValue);
             }
             else
             {
-                var type = expression.Type.GetGenericArguments().LastOrDefault();
+                var type = expression.Type;
+
+                var queryType = typeof(IQueryable<>)
+                    .MakeGenericType(type);
+
+                parameter = Expression.Parameter(queryType);
+                expression = parameter;
 
                 var method = TakeMethod
                     .MakeGenericMethod(type);

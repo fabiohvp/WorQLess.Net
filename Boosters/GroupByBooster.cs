@@ -13,6 +13,7 @@ namespace WorQLess.Boosters
     {
         private static readonly MethodInfo AsQueryableMethod;
         private static readonly MethodInfo GroupByMethod;
+        private static readonly MethodInfo SelectMethod;
 
         static GroupByBooster()
         {
@@ -30,6 +31,12 @@ namespace WorQLess.Boosters
                     o.Name == nameof(Queryable.GroupBy)
                     && o.GetGenericArguments().Length == 2
                     && o.GetParameters().Length == 2
+                );
+
+            SelectMethod = enumerableMethods
+                .First(o =>
+                    o.Name == nameof(Queryable.Select)
+                    && o.GetParameters()[1].ParameterType.GetGenericArguments()[0].GetGenericArguments().Length == 2
                 );
         }
 
@@ -88,14 +95,15 @@ namespace WorQLess.Boosters
         {
             var jArray = (JArray)property.Value;
 
+            //throw new InvalidOperationException("$groupBy - first property is the Key");
             if (fields.Any())
             {
                 var lastField = fields.Last();
                 var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
-                var projection = typeCreator.BuildExpression(type, jArray);
+                var projection = typeCreator.BuildExpression(type, (JArray)jArray.First());
 
                 var method = GroupByMethod
-                    .MakeGenericMethod(type);
+                    .MakeGenericMethod(type, projection.ReturnType);
 
                 var _expression = Expression.Call
                 (
@@ -104,8 +112,14 @@ namespace WorQLess.Boosters
                     projection.GetLambdaExpression()
                 );
 
+
+                var type2 = _expression.Type;
+                var _parameter = Expression.Parameter(type);
+                var projection2 = typeCreator.BuildExpression(type, (JArray)jArray.Last(), true, true);
+                var xz = Boost4(type2, SelectMethod, _expression, projection, _parameter);
+
                 fields.Remove(lastField.Key);
-                var fieldValue = new FieldExpression(_expression, parameter);
+                var fieldValue = new FieldExpression(_expression, lastField.Value.Parameter);
                 fields.Add(property.Name, fieldValue);
             }
             else
