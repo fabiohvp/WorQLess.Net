@@ -6,18 +6,17 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using WorQLess.Models;
-using WorQLess.Requests;
 
 namespace WorQLess.Extensions
 {
-    public class TypeCreator2 : IDisposable
+    public class TypeCreator : IDisposable
     {
         private int Count = 0;
         private Dictionary<string, Type> BuiltTypes;
 
         public virtual ModuleBuilder ModuleBuilder { get; set; }
 
-        public TypeCreator2(string assemblyName)
+        public TypeCreator(string assemblyName)
         {
             BuiltTypes = new Dictionary<string, Type>();
 
@@ -28,81 +27,99 @@ namespace WorQLess.Extensions
             //moduleBuilder = Thread.GetDomain().DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run).DefineDynamicModule(assemblyName.Name);
         }
 
-        public virtual IFieldExpression BuildExpression(Type sourceType, JArray jArray, bool createAnonymousProjection = true, ParameterExpression parameter = null)
+        public virtual IFieldExpression BuildExpression(ParameterExpression parameter, JArray jArray, bool createAnonymousProjection = true)
         {
-            if (parameter == null)
+            var projection = CreateProjection(parameter, jArray, 0);
+
+            if (!createAnonymousProjection && projection.Count == 1)
             {
-                parameter = Expression.Parameter(sourceType, string.Empty);
+                return projection[projection.Select(o => o.Key).First()];
             }
 
-            Expression body = parameter;
-
-            var fields = new Dictionary<string, IFieldExpression>();
-            GetExpressionFromArray(sourceType, fields, jArray, sourceType, body, parameter, "o");
-
-            if (!createAnonymousProjection && fields.Count == 1)
-            {
-                return fields[fields.Select(o => o.Key).First()];
-            }
-
-            var dynamicType = CreateInstanceType(fields);
-            body = CreateInstance(fields, dynamicType);
+            var dynamicType = CreateInstanceType(projection);
+            var body = CreateInstance(projection, dynamicType);
             return new FieldExpression(body, parameter, dynamicType);
         }
 
-        public virtual IFieldExpression BuildExpression(Type sourceType, IProjectionRequest projectionRequest, bool createAnonymousProjection = false)
-        {
-            var returnType = sourceType;
+        //public virtual IFieldExpression BuildExpression(Type sourceType, IProjectionRequest projectionRequest, bool createAnonymousProjection = false)
+        //{
+        //    var returnType = sourceType;
 
-            if (!string.IsNullOrEmpty(projectionRequest?.Name))
-            {
-                var projectionType = projectionRequest.Type;
+        //    if (projectionRequest != null)
+        //    {
+        //        if (string.IsNullOrEmpty(projectionRequest.Name))
+        //        {
+        //            if (projectionRequest.Args != null)
+        //            {
+        //                var jArray = (JArray)projectionRequest.Args;
+        //                var parameter = Expression.Parameter(sourceType);
+        //                var projection = CreateProjection(parameter, jArray, 0);
 
-                if (typeof(IWorQLessDynamicProjection).IsAssignableFrom(projectionType))
-                {
-                    var args = (JArray)projectionRequest.Args;
+        //                if (!createAnonymousProjection && projection.Count == 1)
+        //                {
+        //                    return projection[projection.Select(o => o.Key).First()];
+        //                }
 
-                    var z = BuildExpression(sourceType, args, createAnonymousProjection);
+        //                var dynamicType = CreateInstanceType(projection);
+        //                var body = CreateInstance(projection, dynamicType);
+        //                return new FieldExpression(body, parameter, dynamicType);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            //var projectionType = projectionRequest.Type;
 
-                    return z;
+        //            //if (typeof(IWorQLessDynamicProjection).IsAssignableFrom(projectionType))
+        //            //{
+        //            //    //var args = (JArray)projectionRequest.Args;
+
+        //            //    //var z = BuildExpression(sourceType, args, createAnonymousProjection);
+
+        //            //    //return z;
 
 
 
-                    var queryType = typeof(IQueryable<>).MakeGenericType(sourceType);
-                    var parameter = Expression.Parameter(queryType);
-                    Expression body = parameter;
+        //            //    //var queryType = typeof(IQueryable<>).MakeGenericType(sourceType);
+        //            //    //var parameter = Expression.Parameter(queryType);
+        //            //    //Expression body = parameter;
 
-                    var firstArg = new JArray(args.First());
-                    var booster = new SelectBooster();
-                    var selectProjection = booster.Boost2(WQL.TypeCreator, sourceType, firstArg, body, parameter);
+        //            //    //var firstArg = new JArray(args.First());
+        //            //    //var booster = new SelectBooster();
+        //            //    //var selectProjection = booster.Boost2(WQL.TypeCreator, sourceType, firstArg, body, parameter);
 
-                    if (args.Count > 1)
-                    {
-                        var otherArgs = new JArray(args.Skip(1));
-                        var otherProjections = WQL.TypeCreator.BuildExpression(selectProjection.Expression.Type, otherArgs, false);
+        //            //    //if (args.Count > 1)
+        //            //    //{
+        //            //    //    var otherArgs = new JArray(args.Skip(1));
+        //            //    //    var otherProjections = WQL.TypeCreator.BuildExpression(selectProjection.Expression.Type, otherArgs, false);
 
-                        return selectProjection.Combine(otherProjections, parameter);
-                    }
-                    else
-                    {
-                        selectProjection.Parameter = parameter;
-                    }
+        //            //    //    return selectProjection.Combine(otherProjections, parameter);
+        //            //    //}
+        //            //    //else
+        //            //    //{
+        //            //    //    selectProjection.Parameter = parameter;
+        //            //    //}
 
-                    return selectProjection;
-                }
-                else if (typeof(IWorQLessProjection).IsAssignableFrom(projectionType))
-                {
-                    return WQL.TypeCreator.BuildExpression(sourceType, (JArray)projectionRequest.Args);
-                }
-            }
+        //            //    //return selectProjection;
+        //            //}
+        //            //else if (typeof(IWorQLessProjection).IsAssignableFrom(projectionType))
+        //            //{
+        //            //    return WQL.TypeCreator.BuildExpression(sourceType, (JArray)projectionRequest.Args);
+        //            //}
+        //        }
+        //    }
 
-            return default(IFieldExpression);
-        }
+        //    return default(IFieldExpression);
+        //}
 
-        public virtual IFieldExpression GetExpressionFromValue(Type sourceType, JValue jValue, Type type, Expression expression, ParameterExpression parameter)
+
+
+
+
+
+        public virtual IFieldExpression CreateProjectionValue(ParameterExpression parameter, JValue jValue)
         {
             var name = jValue.Value.ToString();
-            var propertyInfo = type.GetProperty(name);
+            var propertyInfo = parameter.Type.GetProperty(name);
 
             if (!propertyInfo.PropertyType.IsPrimitiveType())
             {
@@ -113,103 +130,105 @@ namespace WorQLess.Extensions
                 throw new MissingFieldException($"{jValue.Path}.{name} does not exist or is not exposed");
             }
 
-            var _expression = Expression.Property(expression, name);
-            return new FieldExpression(_expression, parameter);
+            var _expression = Expression.Property(parameter, name);
+            var fieldValue = new FieldExpression(_expression, parameter);
+            return fieldValue;
         }
 
-        public virtual IDictionary<string, IFieldExpression> GetExpressionFromObject(Type sourceType, JObject jObject, Type type, Expression expression, ParameterExpression parameter, string level)
+        public virtual IDictionary<string, IFieldExpression> CreateProjectionObject(ParameterExpression parameter, JObject jObject, int level)
         {
             var fields = new Dictionary<string, IFieldExpression>();
-            GetExpressionFromObject(sourceType, fields, jObject, type, expression, parameter, level);
-            return fields;
-        }
-
-        public virtual void GetExpressionFromObject(Type sourceType, IDictionary<string, IFieldExpression> fields, JObject jObject, Type type, Expression expression, ParameterExpression parameter, string level)
-        {
             var properties = jObject.Properties();
 
             foreach (var property in properties)
             {
-                GetExpressionFromProperty(sourceType, fields, property, type, expression, parameter, level);
+                var _fields = CreateProjectionProperty(parameter, property, level);
+                fields.AddRange(_fields);
             }
+
+            return fields;
         }
 
-        public virtual void GetExpressionFromProperty(Type sourceType, IDictionary<string, IFieldExpression> fields, JProperty property, Type type, Expression expression, ParameterExpression parameter, string level)
+        public virtual IDictionary<string, IFieldExpression> CreateProjectionProperty(ParameterExpression parameter, JProperty property, int level)
         {
             var propertyName = property.Name.TrimEnd('_');
 
             if (WQL.Boosters.ContainsKey(propertyName))
             {
-                WQL.Boosters[propertyName].Boost(this, sourceType, type, fields, property, expression, parameter);
+                return null;
+                //WQL.Boosters[propertyName].Boost(this, sourceType, type, fields, property, expression, parameter);
             }
             else if (property.Value is JValue)
             {
                 var jValue = (JValue)property.Value;
-                var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, parameter);
-                fields.Add(property.Name, fieldValue);
+                var fieldValue = CreateProjectionValue(parameter, jValue);
+
+                var fields = new Dictionary<string, IFieldExpression>
+                {
+                    { property.Name, fieldValue }
+                };
+
+                return fields;
             }
             else if (property.Value is JObject)
             {
                 var _jObject = (JObject)property.Value;
-                var _fields = GetExpressionFromObject(sourceType, _jObject, type, expression, parameter, level);
+                var _fields = CreateProjectionObject(parameter, _jObject, level);
                 var instanceType = CreateInstanceType(_fields);
                 var instance = CreateInstance(_fields, instanceType);
+                var fieldValue = new FieldExpression(instance, parameter, instanceType);
 
-                fields.Add
-                (
-                    property.Name,
-                    new FieldExpression(instance, parameter, instanceType)
-                );
+                var fields = new Dictionary<string, IFieldExpression>
+                {
+                    { property.Name, fieldValue }
+                };
             }
             else if (property.Value is JArray)
             {
                 if (propertyName != "Key")
                 {
-                    if (type.GetProperty(property.Name).GetCustomAttribute<NotExposeAttribute>() != null)
+                    if (parameter.Type.GetProperty(property.Name).GetCustomAttribute<NotExposeAttribute>() != null)
                     {
                         throw new MissingFieldException($"{property.Path} does not exist or is not exposed");
                     }
                 }
 
-                var _expression = Expression.Property(expression, property.Name);
-                var _type = type.GetProperty(property.Name).PropertyType;
+                //var _expression = Expression.Property(parameter, property.Name);
+                //var _type = parameter.Type.GetProperty(property.Name).PropertyType;
                 var jArray = (JArray)property.Value;
-                var _fields = new Dictionary<string, IFieldExpression>();
-                GetExpressionFromArray(sourceType, _fields, jArray, _type, _expression, parameter, level + level);
+                var fields = CreateProjection(parameter, jArray, level++);
 
-                foreach (var _field in _fields)
-                {
-                    fields.Add(_field);
-                }
+                return fields;
             }
+
+            throw new InvalidOperationException("test");
         }
 
-        public virtual void GetExpressionFromArray(Type sourceType, IDictionary<string, IFieldExpression> fields, JArray jArray, Type type, Expression expression, ParameterExpression parameter, string level)
+        public virtual IDictionary<string, IFieldExpression> CreateProjection(ParameterExpression parameter, JArray jArray, int level)
         {
+            var fields = new Dictionary<string, IFieldExpression>();
+
             foreach (var item in jArray)
             {
-                var _fields = new Dictionary<string, IFieldExpression>();
-
                 if (item is JValue)
                 {
                     var jValue = (JValue)item;
-                    var fieldValue = GetExpressionFromValue(sourceType, jValue, type, expression, parameter);
-                    _fields.Add(jValue.ToString(), fieldValue);
+                    var fieldValue = CreateProjectionValue(parameter, jValue);
+                    fields.Add(jValue.ToString(), fieldValue);
                 }
                 else if (item is JObject)
                 {
-                    GetExpressionFromObject(sourceType, _fields, (JObject)item, type, expression, parameter, level);
+                    var _fields = CreateProjectionObject(parameter, (JObject)item, level);
+                    fields.AddRange(_fields);
                 }
                 else if (item is JArray)
                 {
-                    GetExpressionFromArray(sourceType, _fields, (JArray)item, type, expression, parameter, level);
-                }
-
-                foreach (var _field in _fields)
-                {
-                    fields.Add(_field);
+                    var _fields = CreateProjection(parameter, (JArray)item, level);
+                    fields.AddRange(_fields);
                 }
             }
+
+            return fields;
         }
 
         public virtual Expression CreateInstance(IDictionary<string, IFieldExpression> properties, Type dynamicType)

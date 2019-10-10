@@ -19,7 +19,7 @@ namespace WorQLess.Boosters
 
             SumMethod = enumerableMethods
                 .First(o =>
-                    o.Name == nameof(Queryable.Sum)
+                    o.Name == nameof(Enumerable.Sum)
                     && o.ReturnType == typeof(decimal?)
                     && o.GetParameters().Length == 2
                 );

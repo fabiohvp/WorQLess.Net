@@ -35,11 +35,8 @@ namespace WorQLess.Boosters
                 .GetProperty(nameof(IProjection<object, object>.Predicate))
                 .GetValue(projection);
 
-            var _expression = System
-                .Linq
-                .Expressions
-                .Expression
-                .Invoke((Expression)predicate, lastExpression.GetLambdaExpression());
+            var _expression = Expression
+                .Invoke((Expression)predicate, Expression.Quote(lastExpression.GetLambdaExpression()));
 
             fields.Remove(lastKey);
             fields.Add

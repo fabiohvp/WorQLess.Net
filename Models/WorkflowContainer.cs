@@ -1,7 +1,9 @@
 using Enflow;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using WorQLess.Extensions;
 using WorQLess.Requests;
 using WorQLess.Workflows;
@@ -70,7 +72,21 @@ namespace WorQLess.Models
         public virtual object Execute(Type sourceType, dynamic data, dynamic lastResult)
         {
             var returnType = sourceType;
-            var fieldExpression = WQL.TypeCreator.BuildExpression(sourceType, Request.Project);
+            var fieldExpression = default(IFieldExpression);
+
+            if (Request.Project != null)
+            {
+                var parameter = Expression.Parameter(sourceType);
+
+                if (string.IsNullOrEmpty(Request.Project.Name))
+                {
+                    fieldExpression = WQL.TypeCreator.BuildExpression(parameter, (JArray)Request.Project.Args);
+                }
+                else
+                {
+                    //WQL.TypeCreator.BuildExpression(sourceType, Request.Project);
+                }
+            }
 
             if (fieldExpression == default(IFieldExpression))
             {

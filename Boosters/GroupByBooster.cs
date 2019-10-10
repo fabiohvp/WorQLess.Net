@@ -40,48 +40,6 @@ namespace WorQLess.Boosters
                 );
         }
 
-        public override IFieldExpression Boost2(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression parameter)
-        {
-            var projection = typeCreator.BuildExpression(propertyType, jArray);
-            var _expression = expression;
-
-            if (_expression.Type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
-            {
-                var asQueryableMethod = AsQueryableMethod
-                    .MakeGenericMethod(propertyType);
-
-                _expression = Expression.Call
-                (
-                    asQueryableMethod,
-                    _expression
-                );
-            }
-
-            var method = GroupByMethod
-                .MakeGenericMethod(propertyType, projection.ReturnType);
-
-            var selectExpression = Expression.Call
-            (
-                method,
-                _expression,
-                projection.GetLambdaExpression()
-            );
-
-            return new FieldExpression(selectExpression, projection.Parameter);
-
-            //ToList() only when using aspnet core
-            //var toListMethod = ToListMethod
-            //    .MakeGenericMethod(projection.Type);
-
-            //var toListExpression = Expression.Call
-            //(
-            //    toListMethod,
-            //    selectExpression
-            //);
-
-            //return new FieldExpression(toListExpression, projection.Parameter);
-        }
-
         public override void Boost
         (
             TypeCreator typeCreator,
@@ -95,31 +53,23 @@ namespace WorQLess.Boosters
         {
             var jArray = (JArray)property.Value;
 
-            //throw new InvalidOperationException("$groupBy - first property is the Key");
             if (fields.Any())
             {
                 var lastField = fields.Last();
                 var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
-                var projection = typeCreator.BuildExpression(type, (JArray)jArray.First());
+                var projection = typeCreator.BuildExpression(type, jArray);
 
-                var method = GroupByMethod
-                    .MakeGenericMethod(type, projection.ReturnType);
-
-                var _expression = Expression.Call
+                var fieldValue = Boost4
                 (
-                    method,
+                    type,
+                    GroupByMethod,
                     lastField.Value.Expression,
-                    projection.GetLambdaExpression()
+                    projection,
+                    parameter
                 );
 
-
-                var type2 = _expression.Type;
-                var _parameter = Expression.Parameter(type);
-                var projection2 = typeCreator.BuildExpression(type, (JArray)jArray.Last(), true, true);
-                var xz = Boost4(type2, SelectMethod, _expression, projection, _parameter);
-
+                fieldValue.Parameter = lastField.Value.Parameter;
                 fields.Remove(lastField.Key);
-                var fieldValue = new FieldExpression(_expression, lastField.Value.Parameter);
                 fields.Add(property.Name, fieldValue);
             }
             else
@@ -159,12 +109,6 @@ namespace WorQLess.Boosters
         {
             var key = typeCreator.BuildExpression(sourceType, jArray);
             return key;
-        }
-
-        private IFieldExpression GetValue(TypeCreator typeCreator, Type sourceType, Expression expression, JArray jArray)
-        {
-            var value = typeCreator.BuildExpression(sourceType, jArray, false);
-            return value;
         }
     }
 }

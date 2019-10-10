@@ -3,15 +3,17 @@
     "entity": "FT_ReceitaMunicipio",
     "name": "Select",
     "project": {
-      "name": "Select",
       "args": [
-        [
-          "Arrecadada",
-          "IdTempo"
-        ],
         {
+          "$select": [
+            "Arrecadada",
+            "IdTempo"
+          ],
           "$groupBy": [ "IdTempo" ],
-          "$select": ["Arrecadada"]
+          "$select_": [
+            { "$sum": [ "Arrecadada" ] }
+          ],
+          "$take": 5
         }
       ]
     }

@@ -36,18 +36,18 @@ namespace WorQLess
             TypeCreator = new TypeCreator("WorQLessDynamicAssembly");
             Boosters = new Dictionary<string, IBooster>
             {
-                { BoosterPrefix + "as", new AsBooster() },
-                { BoosterPrefix + "count", new CountBooster() },
-				//new KeyValuePair<string, IBooster>(BoosterPrefix + "implements", new ImplementsBooster()), //not working yet
-                { BoosterPrefix + "groupBy", new GroupByBooster() },
-                { BoosterPrefix + "orderByAsc", new OrderByAscBooster() },
-                { BoosterPrefix + "orderByDesc", new OrderByDescBooster() },
-                { BoosterPrefix + "projectAs", new ProjectAsBooster() },
-				//new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "selectMany", new SelectManyBooster()}, //parameter is wrong
-				{ BoosterPrefix + "select", new SelectBooster() },
-                { BoosterPrefix + "sum", new SumBooster() },
-                { BoosterPrefix + "take", new TakeBooster() },
-                { BoosterPrefix + "where", new WhereBooster() }
+                //            { BoosterPrefix + "as", new AsBooster() },
+                //            { BoosterPrefix + "count", new CountBooster() },
+                ////new KeyValuePair<string, IBooster>(BoosterPrefix + "implements", new ImplementsBooster()), //not working yet
+                //            { BoosterPrefix + "groupBy", new GroupByBooster() },
+                //            { BoosterPrefix + "orderByAsc", new OrderByAscBooster() },
+                //            { BoosterPrefix + "orderByDesc", new OrderByDescBooster() },
+                //            { BoosterPrefix + "projectAs", new ProjectAsBooster() },
+                ////new KeyValuePair<string, IBooster>(WQL.BoosterPrefix + "selectMany", new SelectManyBooster()}, //parameter is wrong
+                //{ BoosterPrefix + "select", new SelectBooster() },
+                //            { BoosterPrefix + "sum", new SumBooster() },
+                //            { BoosterPrefix + "take", new TakeBooster() },
+                //            { BoosterPrefix + "where", new WhereBooster() }
             };
             ProjectionsTypes = new Dictionary<string, Type>
             {

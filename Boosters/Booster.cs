@@ -6,19 +6,31 @@ using System.Linq.Expressions;
 using System.Reflection;
 using WorQLess.Extensions;
 using WorQLess.Models;
+using WorQLess.Requests;
 
 namespace WorQLess.Boosters
 {
     public abstract class Booster : IBooster
     {
+        private static readonly MethodInfo AsQueryableMethod;
+
+        static Booster()
+        {
+            var enumerableMethods = typeof(Queryable).GetMethods();
+
+            AsQueryableMethod = enumerableMethods
+                .First(o =>
+                    o.Name == nameof(Queryable.AsQueryable)
+                    && o.GetGenericArguments().Length == 1
+                );
+        }
+
         public abstract void Boost(TypeCreator typeCreator, Type sourceType, Type propertyType, IDictionary<string, IFieldExpression> fields, JProperty property, Expression expression, ParameterExpression parameter);
 
         public virtual IFieldExpression Boost2(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression parameter)
         {
             return null;
         }
-
-
 
         protected virtual IFieldExpression Boost4
         (
@@ -30,6 +42,7 @@ namespace WorQLess.Boosters
         )
         {
             var method = default(MethodInfo);
+            var lambda = projection.GetLambdaExpression();
 
             if (methodInfo.GetGenericArguments().Length == 1)
             {
@@ -46,7 +59,7 @@ namespace WorQLess.Boosters
             (
                 method,
                 expression,
-                projection.GetLambdaExpression()
+                Expression.Quote(lambda)
             );
 
             var fieldValue = new FieldExpression(_expression, parameter);
@@ -120,27 +133,49 @@ namespace WorQLess.Boosters
             {
                 var type = expression.Type.GetGenericArguments().LastOrDefault();
 
-                if (type != default(Type))
+                //if (type != default(Type))
+                //{
+                //    var projection = typeCreator
+                //        .BuildExpression(type, jArray, false);
+
+                //    var fieldValue = Boost4
+                //    (
+                //        type,
+                //        methodInfo,
+                //        expression,
+                //        projection,
+                //        parameter
+                //    );
+
+                //    fields.Add(property.Name, fieldValue);
+                //}
+                //else
                 {
+                    //type = expression.Type;
                     var projection = typeCreator
                         .BuildExpression(type, jArray, false);
 
-                    var fieldValue = Boost4
-                    (
-                        type,
-                        methodInfo,
-                        expression,
-                        projection,
-                        parameter
-                    );
+                    //var lambda = Expression.Lambda
+                    //(
+                    //    typeof(Func<,>).MakeGenericType(type, projection.ReturnType),
+                    //    projection.Expression,
+                    //    projection.Parameter
+                    //);
 
-                    fields.Add(property.Name, fieldValue);
-                }
-                else
-                {
-                    type = expression.Type;
-                    var projection = typeCreator
-                        .BuildExpression(type, jArray, false);
+                    //var queryType = typeof(IQueryable<>)
+                    //    .MakeGenericType(type);
+
+                    //parameter = Expression.Parameter(queryType);
+                    //expression = parameter;
+
+                    //var selectExpression = Expression.Call
+                    //(
+                    //    methodInfo.MakeGenericMethod(type),
+                    //    expression,
+                    //    lambda
+                    //);
+
+                    //var fieldValue = new FieldExpression(selectExpression, parameter);
 
                     var fieldValue = Boost5
                     (
@@ -154,6 +189,58 @@ namespace WorQLess.Boosters
                     fields.Add(property.Name, fieldValue);
                 }
             }
+        }
+
+        protected virtual IFieldExpression AsQueryable
+        (
+            TypeCreator typeCreator,
+            Type queryType,
+            Type propertyType,
+            ParameterExpression parameter,
+            IProjectionRequest projectionRequest,
+            MethodInfo methodInfo
+        )
+        {
+            var projection = typeCreator.BuildExpression(propertyType, projectionRequest);
+            Expression expression = parameter;
+
+            if (expression.Type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+            {
+                var asQueryableMethod = AsQueryableMethod
+                    .MakeGenericMethod(propertyType);
+
+                expression = Expression.Call
+                (
+                    asQueryableMethod,
+                    expression
+                );
+            }
+
+            var method = default(MethodInfo);
+
+            if (methodInfo.GetGenericArguments().Length == 1)
+            {
+                method = methodInfo
+                    .MakeGenericMethod(propertyType);
+            }
+            else
+            {
+                method = methodInfo
+                    .MakeGenericMethod(propertyType, projection.ReturnType);
+            }
+
+            //var method = methodInfo
+            //    .MakeGenericMethod(propertyType, projection.ReturnType);
+
+            var selectExpression = Expression.Call
+            (
+                method,
+                expression,
+                Expression.Quote(projection.GetLambdaExpression())
+            );
+
+            var fieldValue = new FieldExpression(selectExpression, parameter);
+            return fieldValue;
         }
     }
 }

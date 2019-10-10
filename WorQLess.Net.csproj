@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="domain">
+      <HintPath>..\..\ControleSocial\domain\bin\Debug\domain.dll</HintPath>
+    </Reference>
     <Reference Include="Enflow.Net, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Enflow.Net\Enflow.Net\bin\Debug\Enflow.Net.dll</HintPath>
@@ -62,21 +65,23 @@
     <Compile Include="Attributes\NotExposeAttribute.cs" />
     <Compile Include="Boosters\AsBooster.cs" />
     <Compile Include="Boosters\Booster.cs" />
+    <Compile Include="Boosters\CountBooster.cs" />
+    <Compile Include="Boosters\GroupByBooster.cs" />
     <Compile Include="Boosters\IBooster.cs" />
     <Compile Include="Boosters\ImplementsBooster.cs" />
+    <Compile Include="Boosters\OrderByAscBooster.cs" />
     <Compile Include="Boosters\OrderByDescBooster.cs" />
     <Compile Include="Boosters\ProjectAsBooster.cs" />
-    <Compile Include="Boosters\SelectManyBooster.cs" />
     <Compile Include="Boosters\SelectBooster.cs" />
-    <Compile Include="Boosters\CountBooster.cs" />
-    <Compile Include="Boosters\OrderByAscBooster.cs" />
-    <Compile Include="Boosters\GroupByBooster.cs" />
-    <Compile Include="Boosters\WhereBooster.cs" />
-    <Compile Include="Boosters\TakeBooster.cs" />
+    <Compile Include="Boosters\SelectManyBooster.cs" />
     <Compile Include="Boosters\SumBooster.cs" />
+    <Compile Include="Boosters\TakeBooster.cs" />
+    <Compile Include="Boosters\WhereBooster.cs" />
     <Compile Include="Extensions\DbContextExtensions.cs" />
+    <Compile Include="Extensions\IDictionaryExtensions.cs" />
     <Compile Include="Extensions\Reflection.cs" />
     <Compile Include="Extensions\Type.cs" />
+    <Compile Include="Extensions\TypeCreator2.cs" />
     <Compile Include="Models\FieldExpression.cs" />
     <Compile Include="Models\IRawArguments.cs" />
     <Compile Include="Models\IWorQLessProjection.cs" />

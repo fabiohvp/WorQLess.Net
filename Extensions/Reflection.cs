@@ -112,6 +112,11 @@ namespace WorQLess.Extensions
 
         internal static Type GetTypeof(IDictionary<string, Type> types, string name)
         {
+            if (string.IsNullOrEmpty(name))
+            {
+                name = nameof(Queryable.Select);
+            }
+
             var type = types
                 .Where(o => o.Key.EndsWith(name))
                 .Select(o => o.Value)

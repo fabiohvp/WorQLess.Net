@@ -14,6 +14,7 @@ namespace WorQLess.Boosters
     {
         private static readonly MethodInfo AsQueryableMethod;
         private static readonly MethodInfo SelectMethod;
+        private static readonly MethodInfo SelectMethod2;
 
         static SelectBooster()
         {
@@ -29,6 +30,12 @@ namespace WorQLess.Boosters
                 .First(o =>
                     o.Name == nameof(Queryable.Select)
                     && o.GetParameters()[1].ParameterType.GetGenericArguments()[0].GetGenericArguments().Length == 2
+                );
+
+            SelectMethod2 = typeof(Enumerable).GetMethods()
+                .First(o =>
+                    o.Name == nameof(Queryable.Select)
+                    && o.GetParameters()[1].ParameterType.GetGenericArguments().Length == 2
                 );
         }
 
@@ -56,7 +63,7 @@ namespace WorQLess.Boosters
             (
                 method,
                 _expression,
-                projection.GetLambdaExpression()
+                Expression.Quote(projection.GetLambdaExpression())
             );
 
             return new FieldExpression(selectExpression, projection.Parameter);
@@ -101,11 +108,12 @@ namespace WorQLess.Boosters
             var method = SelectMethod
                 .MakeGenericMethod(propertyType, projection.ReturnType);
 
+
             var selectExpression = Expression.Call
             (
                 method,
                 expression,
-                projection.GetLambdaExpression()
+                Expression.Quote(projection.GetLambdaExpression())
             );
 
             var fieldValue = new FieldExpression(selectExpression, parameter);
@@ -133,24 +141,61 @@ namespace WorQLess.Boosters
 
                 if (fields.Any())
                 {
-                    var lastKey = fields.Select(o => o.Key).First();
+                    var lastKey = fields.Select(o => o.Key).Last();
                     var lastField = fields[lastKey];
-                    var queryType = lastField.ReturnType;//.GetGenericArguments().LastOrDefault();
-                    var _parameter = Expression.Parameter(queryType);
+                    var queryType = lastField.ReturnType;
                     propertyType = queryType.GetGenericArguments().LastOrDefault();
 
-                    var fieldValue = Boost3
+                    var innerType = typeof(IQueryable<>).MakeGenericType(propertyType.GetGenericArguments().LastOrDefault());
+                    var innerGroupByarg = Expression.Parameter(innerType, "y");
+
+                    var b = Expression.Parameter(propertyType);
+
+                    var projection = typeCreator
+                        .BuildExpression(propertyType, (JArray)property.Value, false);
+
+                    projection.Parameter = b;
+                    //var lambda = projection.GetLambdaExpression();
+                    var lambda = Expression.Lambda
                     (
-                        typeCreator,
-                        queryType,
-                        propertyType,
-                        _parameter,
-                        projectionRequest
+                        projection.Expression,
+                        b
                     );
 
-                    fieldValue = fieldValue.Combine(lastField, _parameter);
-                    fieldValue.Parameter = lastField.Parameter;
+                    var method = SelectMethod
+                        .MakeGenericMethod(b.Type, projection.ReturnType);
 
+                    var selectExpression = Expression.Call
+                    (
+                        method,
+                        lastField.Expression,
+                        Expression.Quote(lambda)
+                    );
+
+                    var fieldValue = new FieldExpression(selectExpression, lastField.Parameter);
+
+
+                    //var projection = typeCreator
+                    //    .BuildExpression(propertyType, (JArray)property.Value, false);
+
+                    //var method = SelectMethod
+                    //    .MakeGenericMethod(propertyType, projection.ReturnType);
+
+                    //var lambda = Expression.Lambda
+                    //(
+                    //    typeof(Func<,>).MakeGenericType(propertyType, projection.ReturnType),
+                    //    projection.Expression,
+                    //    projection.Parameter
+                    //);
+
+                    //var selectExpression = Expression.Call
+                    //(
+                    //    method,
+                    //    lastField.Expression,
+                    //    lambda
+                    //);
+
+                    //var fieldValue = new FieldExpression(selectExpression, lastField.Parameter);
                     fields.Remove(lastKey);
                     fields.Add(property.Name, fieldValue);
                 }
