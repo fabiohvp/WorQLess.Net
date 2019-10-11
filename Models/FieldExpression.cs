@@ -14,7 +14,7 @@ namespace WorQLess.Models
         LambdaExpression GetLambdaExpression();
         Expression<Func<T, U>> GetLambdaExpression<T, U>();
         Expression<Func<T, bool>> GetLambdaExpression<T>(Func<Expression, Expression, BinaryExpression> operandMethod, object value);
-        IFieldExpression Combine(IFieldExpression other, ParameterExpression parameter);
+        //IFieldExpression Combine(IFieldExpression other, ParameterExpression parameter);
     }
 
     public class FieldExpression : IFieldExpression
@@ -24,15 +24,15 @@ namespace WorQLess.Models
         public IList<Type> Interfaces { get; set; }
         public Type ReturnType { get; set; }
 
-        public FieldExpression(Expression expression, ParameterExpression parameter)
+        public FieldExpression(Expression expression, Expression parameter)
             : this(expression, parameter, expression.Type)
         {
         }
 
-        public FieldExpression(Expression expression, ParameterExpression parameter, Type type)
+        public FieldExpression(Expression expression, Expression parameter, Type type)
         {
             Expression = expression;
-            Parameter = parameter;
+            Parameter = parameter as ParameterExpression;
             ReturnType = type;
             Interfaces = new List<Type>();
         }
@@ -45,7 +45,7 @@ namespace WorQLess.Models
 
         public Expression<Func<T, U>> GetLambdaExpression<T, U>()
         {
-            var lambda = Expression.Lambda<Func<T, U>>(Expression, Parameter);
+            var lambda = Expression.Lambda<Func<T, U>>(Expression.Quote(Expression), Parameter);
             return lambda;
         }
 
@@ -59,31 +59,31 @@ namespace WorQLess.Models
         }
 
 
-        private class SwapVisitor : ExpressionVisitor
-        {
-            private readonly Expression _source, _replacement;
+        //private class SwapVisitor : ExpressionVisitor
+        //{
+        //    private readonly Expression _source, _replacement;
 
-            public SwapVisitor(Expression source, Expression replacement)
-            {
-                _source = source;
-                _replacement = replacement;
-            }
+        //    public SwapVisitor(Expression source, Expression replacement)
+        //    {
+        //        _source = source;
+        //        _replacement = replacement;
+        //    }
 
-            public override Expression Visit(Expression node)
-            {
-                return node == _source ? _replacement : base.Visit(node);
-            }
-        }
+        //    public override Expression Visit(Expression node)
+        //    {
+        //        return node == _source ? _replacement : base.Visit(node);
+        //    }
+        //}
 
-        public IFieldExpression Combine(IFieldExpression other, ParameterExpression parameter)
-        {
-            var outer = GetLambdaExpression();
-            var inner = other.GetLambdaExpression();
-            //var inner = GetLambdaExpression();
-            //var outer = other.GetLambdaExpression();
-            var visitor = new SwapVisitor(outer.Parameters[0], inner.Body);
-            var expression = visitor.Visit(outer.Body);
-            return new FieldExpression(expression, parameter);
-        }
+        //public IFieldExpression Combine(IFieldExpression other, ParameterExpression parameter)
+        //{
+        //    var outer = GetLambdaExpression();
+        //    var inner = other.GetLambdaExpression();
+        //    //var inner = GetLambdaExpression();
+        //    //var outer = other.GetLambdaExpression();
+        //    var visitor = new SwapVisitor(outer.Parameters[0], inner.Body);
+        //    var expression = visitor.Visit(outer.Body);
+        //    return new FieldExpression(expression, parameter);
+        //}
     }
 }

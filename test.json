@@ -19,3 +19,28 @@
     }
   }
 ]
+
+[
+  {
+    "entity": "FT_ReceitaMunicipio",
+    "name": "Select",
+    "project": {
+      "args": [
+        {
+          "$select": [
+            "IdTempo",
+            "Arrecadada"
+          ],
+          "$orderByDesc": [ "IdTempo" ],
+          "$take": 10000,
+          "$groupBy": [ "IdTempo" ],
+          "$select_": [
+            { "Key": [ "IdTempo" ] },
+            { "$sum": [ "Arrecadada" ] }
+          ],
+          "$count": []
+        }
+      ]
+    }
+  }
+]

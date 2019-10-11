@@ -1,12 +1,10 @@
 ﻿using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using WorQLess.Extensions;
 using WorQLess.Models;
-using WorQLess.Requests;
 
 namespace WorQLess.Boosters
 {
@@ -25,189 +23,139 @@ namespace WorQLess.Boosters
                 );
         }
 
-        public abstract void Boost(TypeCreator typeCreator, Type sourceType, Type propertyType, IDictionary<string, IFieldExpression> fields, JProperty property, Expression expression, ParameterExpression parameter);
+        public abstract void Boost
+        (
+            TypeCreator typeCreator,
+            Expression body,
+            JProperty property,
+            IDictionary<string, IFieldExpression> fields
+        );
 
-        public virtual IFieldExpression Boost2(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression parameter)
+        protected Expression GetParameter(IDictionary<string, IFieldExpression> fields, Expression currentParameter)
         {
-            return null;
+            var lastField = fields.Values.LastOrDefault();
+
+            if (lastField == null)
+            {
+                return currentParameter;
+            }
+
+            return Expression.Parameter(lastField.ReturnType.GetGenericArguments().Single()); //next method must use the last returned type
         }
 
-        protected virtual IFieldExpression Boost4
+
+        protected IFieldExpression CallMethod
         (
-            Type type,
+            TypeCreator typeCreator,
+            Expression parameter,
+            JArray jArray,
             MethodInfo methodInfo,
-            Expression expression,
-            IFieldExpression projection,
-            ParameterExpression parameter
+            bool createAnonymousProjection
         )
         {
-            var method = default(MethodInfo);
+            var projection = typeCreator.BuildProjection(parameter, jArray, createAnonymousProjection);
             var lambda = projection.GetLambdaExpression();
 
-            if (methodInfo.GetGenericArguments().Length == 1)
-            {
-                method = methodInfo
-                    .MakeGenericMethod(type);
-            }
-            else
-            {
-                method = methodInfo
-                    .MakeGenericMethod(type, projection.ReturnType);
-            }
+            return CallMethod
+            (
+                typeCreator,
+                parameter,
+                lambda,
+                methodInfo
+            );
+        }
 
-            var _expression = Expression.Call
+        protected IFieldExpression CallMethodOnGroup
+        (
+            TypeCreator typeCreator,
+            Expression parameter,
+            LambdaExpression lambda,
+            MethodInfo methodInfo
+        )
+        {
+            var queryType = typeof(IQueryable<>).MakeGenericType(parameter.Type);
+            var queryParameter = Expression.Parameter(queryType);
+            Expression expression = queryParameter;
+
+            var method = methodInfo
+                .MakeGenericMethod(parameter.Type);
+
+            expression = Expression.Call
             (
                 method,
                 expression,
                 Expression.Quote(lambda)
             );
 
-            var fieldValue = new FieldExpression(_expression, parameter);
-            return fieldValue;
-        }
-
-        protected virtual IFieldExpression Boost5
-        (
-            Type type,
-            MethodInfo methodInfo,
-            Expression expression,
-            IFieldExpression projection,
-            ParameterExpression parameter
-        )
-        {
-            var queryType = typeof(IQueryable<>)
-                .MakeGenericType(type);
-
-            parameter = Expression.Parameter(queryType);
-            expression = parameter;
-
-            var fieldValue = Boost4
-            (
-                type,
-                methodInfo,
-                expression,
-                projection,
-                parameter
-            );
-
+            var fieldValue = new FieldExpression(expression, parameter);
             return fieldValue;
         }
 
 
-        protected virtual void Boost3
+        protected IFieldExpression CallMethod
         (
             TypeCreator typeCreator,
-            Type sourceType,
-            Type propertyType,
-            IDictionary<string, IFieldExpression> fields,
-            JProperty property,
-            Expression expression,
-            ParameterExpression parameter,
+            Expression parameter,
+            LambdaExpression lambda,
             MethodInfo methodInfo
         )
         {
-            var jArray = (JArray)property.Value;
+            var queryType = typeof(IQueryable<>).MakeGenericType(parameter.Type);
+            var queryParameter = Expression.Parameter(queryType);
+            Expression expression = queryParameter;
 
-            if (fields.Any())
+            //if (expression.Type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+            //{
+            //    var asQueryableMethod = AsQueryableMethod
+            //        .MakeGenericMethod(parameter.Type);
+
+            //    expression = Expression.Call
+            //    (
+            //        asQueryableMethod,
+            //        expression
+            //    );
+            //}
+
+            var method = default(MethodInfo);
+
+            if (methodInfo.GetGenericArguments().Count() == 1)
             {
-                var lastField = fields.Last();
-                var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
-                var projection = typeCreator.BuildExpression(type, jArray, false);
-
-                var fieldValue = Boost4
-                (
-                    type,
-                    methodInfo,
-                    lastField.Value.Expression,
-                    projection,
-                    parameter
-                );
-
-                fieldValue = fieldValue.Combine(lastField.Value, parameter);
-                fieldValue.Parameter = lastField.Value.Parameter;
-
-                fields.Remove(lastField.Key);
-                fields.Add(property.Name, fieldValue);
+                method = methodInfo
+                    .MakeGenericMethod(parameter.Type);
             }
             else
             {
-                var type = expression.Type.GetGenericArguments().LastOrDefault();
-
-                //if (type != default(Type))
-                //{
-                //    var projection = typeCreator
-                //        .BuildExpression(type, jArray, false);
-
-                //    var fieldValue = Boost4
-                //    (
-                //        type,
-                //        methodInfo,
-                //        expression,
-                //        projection,
-                //        parameter
-                //    );
-
-                //    fields.Add(property.Name, fieldValue);
-                //}
-                //else
-                {
-                    //type = expression.Type;
-                    var projection = typeCreator
-                        .BuildExpression(type, jArray, false);
-
-                    //var lambda = Expression.Lambda
-                    //(
-                    //    typeof(Func<,>).MakeGenericType(type, projection.ReturnType),
-                    //    projection.Expression,
-                    //    projection.Parameter
-                    //);
-
-                    //var queryType = typeof(IQueryable<>)
-                    //    .MakeGenericType(type);
-
-                    //parameter = Expression.Parameter(queryType);
-                    //expression = parameter;
-
-                    //var selectExpression = Expression.Call
-                    //(
-                    //    methodInfo.MakeGenericMethod(type),
-                    //    expression,
-                    //    lambda
-                    //);
-
-                    //var fieldValue = new FieldExpression(selectExpression, parameter);
-
-                    var fieldValue = Boost5
-                    (
-                        type,
-                        methodInfo,
-                        expression,
-                        projection,
-                        parameter
-                    );
-
-                    fields.Add(property.Name, fieldValue);
-                }
+                method = methodInfo
+                    .MakeGenericMethod(parameter.Type, lambda.Body.Type);
             }
+
+            expression = Expression.Call
+            (
+                method,
+                expression,
+                Expression.Quote(lambda)
+            );
+
+            var fieldValue = new FieldExpression(expression, queryParameter);
+            return fieldValue;
         }
 
-        protected virtual IFieldExpression AsQueryable
+        protected IFieldExpression CallMethod
         (
             TypeCreator typeCreator,
-            Type queryType,
-            Type propertyType,
-            ParameterExpression parameter,
-            IProjectionRequest projectionRequest,
+            Expression parameter,
+            ConstantExpression value,
             MethodInfo methodInfo
         )
         {
-            var projection = typeCreator.BuildExpression(propertyType, projectionRequest);
-            Expression expression = parameter;
+            var queryType = typeof(IQueryable<>).MakeGenericType(parameter.Type);
+            var queryParameter = Expression.Parameter(queryType);
+            Expression expression = queryParameter;
 
             if (expression.Type.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
             {
                 var asQueryableMethod = AsQueryableMethod
-                    .MakeGenericMethod(propertyType);
+                    .MakeGenericMethod(parameter.Type);
 
                 expression = Expression.Call
                 (
@@ -216,31 +164,32 @@ namespace WorQLess.Boosters
                 );
             }
 
-            var method = default(MethodInfo);
+            var method = methodInfo
+                .MakeGenericMethod(parameter.Type);
 
-            if (methodInfo.GetGenericArguments().Length == 1)
-            {
-                method = methodInfo
-                    .MakeGenericMethod(propertyType);
-            }
-            else
-            {
-                method = methodInfo
-                    .MakeGenericMethod(propertyType, projection.ReturnType);
-            }
-
-            //var method = methodInfo
-            //    .MakeGenericMethod(propertyType, projection.ReturnType);
-
-            var selectExpression = Expression.Call
+            expression = Expression.Call
             (
                 method,
                 expression,
-                Expression.Quote(projection.GetLambdaExpression())
+                value
             );
 
-            var fieldValue = new FieldExpression(selectExpression, parameter);
+            var fieldValue = new FieldExpression(expression, queryParameter);
             return fieldValue;
+        }
+
+        protected Expression AsQueryable(Expression expression)
+        {
+            var asQueryableMethod = AsQueryableMethod
+                .MakeGenericMethod(expression.Type.GetGenericArguments().LastOrDefault());
+
+            expression = Expression.Call
+            (
+                asQueryableMethod,
+                expression
+            );
+
+            return expression;
         }
     }
 }

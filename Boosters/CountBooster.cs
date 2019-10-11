@@ -1,5 +1,4 @@
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -27,29 +26,43 @@ namespace WorQLess.Boosters
         public override void Boost
         (
             TypeCreator typeCreator,
-            Type sourceType,
-            Type propertyType,
-            IDictionary<string, IFieldExpression> fields,
-            JProperty property,
             Expression expression,
-            ParameterExpression parameter
+            JProperty property,
+            IDictionary<string, IFieldExpression> fields
         )
         {
-            var lastField = fields.Last();
-            var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
-
+            var lastField = fields.LastOrDefault();
+            var parameter = GetParameter(fields, expression);
+            var entityType = parameter.Type;
             var method = CountMethod
-                .MakeGenericMethod(type);
+               .MakeGenericMethod(entityType);
 
-            var _expression = Expression.Call
-            (
-                method,
-                lastField.Value.Expression
-            );
+            if (lastField.Value == null)
+            {
+                var queryType = typeof(IQueryable<>).MakeGenericType(entityType);
+                var queryParameter = Expression.Parameter(queryType);
 
-            fields.Remove(lastField.Key);
-            var fieldValue = new FieldExpression(_expression, lastField.Value.Parameter);
-            fields.Add(property.Name, fieldValue);
+                var countCall = Expression.Call
+                (
+                    method,
+                    queryParameter
+                );
+
+                var fieldValue = new FieldExpression(countCall, queryParameter);
+                fields.Add(property.Name, fieldValue);
+            }
+            else
+            {
+                var countCall = Expression.Call
+                (
+                    method,
+                    lastField.Value.Expression
+                );
+
+                var fieldValue = new FieldExpression(countCall, lastField.Value.Parameter);
+                fields.Remove(lastField.Key);
+                fields.Add(property.Name, fieldValue);
+            }
         }
     }
 }

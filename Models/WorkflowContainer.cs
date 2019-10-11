@@ -80,7 +80,9 @@ namespace WorQLess.Models
 
                 if (string.IsNullOrEmpty(Request.Project.Name))
                 {
-                    fieldExpression = WQL.TypeCreator.BuildExpression(parameter, (JArray)Request.Project.Args);
+                    fieldExpression = WQL.TypeCreator
+                        .CreateProjection(parameter, (JArray)Request.Project.Args)
+                        .Compose();
                 }
                 else
                 {

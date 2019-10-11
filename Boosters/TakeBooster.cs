@@ -1,5 +1,4 @@
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -11,7 +10,7 @@ namespace WorQLess.Boosters
 {
     public class TakeBooster : Booster
     {
-        private static MethodInfo TakeMethod;
+        private static readonly MethodInfo TakeMethod;
 
         static TakeBooster()
         {
@@ -24,58 +23,23 @@ namespace WorQLess.Boosters
         public override void Boost
         (
             TypeCreator typeCreator,
-            Type sourceType,
-            Type propertyType,
-            IDictionary<string, IFieldExpression> fields,
-            JProperty property,
             Expression expression,
-            ParameterExpression parameter
+            JProperty property,
+            IDictionary<string, IFieldExpression> fields
         )
         {
+            var parameter = GetParameter(fields, expression);
             var count = property.Value.ToObject<int>();
 
-            if (fields.Any())
-            {
-                var lastField = fields.Last();
-                var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
+            var fieldValue = CallMethod
+            (
+                typeCreator,
+                parameter,
+                Expression.Constant(count),
+                TakeMethod
+            );
 
-                var method = TakeMethod
-                    .MakeGenericMethod(type);
-
-                var _expression = Expression.Call
-                (
-                    method,
-                    lastField.Value.Expression,
-                    Expression.Constant(count)
-                );
-
-                fields.Remove(lastField.Key);
-                var fieldValue = new FieldExpression(_expression, lastField.Value.Parameter);
-                fields.Add(property.Name, fieldValue);
-            }
-            else
-            {
-                var type = expression.Type;
-
-                var queryType = typeof(IQueryable<>)
-                    .MakeGenericType(type);
-
-                parameter = Expression.Parameter(queryType);
-                expression = parameter;
-
-                var method = TakeMethod
-                    .MakeGenericMethod(type);
-
-                var _expression = Expression.Call
-                (
-                    method,
-                    expression,
-                    Expression.Constant(count)
-                );
-
-                var fieldValue = new FieldExpression(_expression, parameter);
-                fields.Add(property.Name, fieldValue);
-            }
+            fields.Add(property.Name, fieldValue);
         }
     }
 }

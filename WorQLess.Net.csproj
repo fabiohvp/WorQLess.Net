@@ -68,15 +68,12 @@
     <Compile Include="Boosters\CountBooster.cs" />
     <Compile Include="Boosters\GroupByBooster.cs" />
     <Compile Include="Boosters\IBooster.cs" />
-    <Compile Include="Boosters\ImplementsBooster.cs" />
     <Compile Include="Boosters\OrderByAscBooster.cs" />
     <Compile Include="Boosters\OrderByDescBooster.cs" />
-    <Compile Include="Boosters\ProjectAsBooster.cs" />
     <Compile Include="Boosters\SelectBooster.cs" />
     <Compile Include="Boosters\SelectManyBooster.cs" />
     <Compile Include="Boosters\SumBooster.cs" />
     <Compile Include="Boosters\TakeBooster.cs" />
-    <Compile Include="Boosters\WhereBooster.cs" />
     <Compile Include="Extensions\DbContextExtensions.cs" />
     <Compile Include="Extensions\IDictionaryExtensions.cs" />
     <Compile Include="Extensions\Reflection.cs" />

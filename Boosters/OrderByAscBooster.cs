@@ -1,5 +1,4 @@
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -27,15 +26,23 @@ namespace WorQLess.Boosters
         public override void Boost
         (
             TypeCreator typeCreator,
-            Type sourceType,
-            Type propertyType,
-            IDictionary<string, IFieldExpression> fields,
-            JProperty property,
             Expression expression,
-            ParameterExpression parameter
+            JProperty property,
+            IDictionary<string, IFieldExpression> fields
         )
         {
-            Boost3(typeCreator, sourceType, propertyType, fields, property, expression, parameter, OrderByAscendingMethod);
+            var parameter = GetParameter(fields, expression);
+
+            var fieldValue = CallMethod
+            (
+                typeCreator,
+                parameter,
+                (JArray)property.Value,
+                OrderByAscendingMethod,
+                createAnonymousProjection: false
+            );
+
+            fields.Add(property.Name, fieldValue);
         }
     }
 }

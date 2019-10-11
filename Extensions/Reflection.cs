@@ -112,7 +112,7 @@ namespace WorQLess.Extensions
 
         internal static Type GetTypeof(IDictionary<string, Type> types, string name)
         {
-            if (string.IsNullOrEmpty(name))
+            if (name == default(string))
             {
                 name = nameof(Queryable.Select);
             }

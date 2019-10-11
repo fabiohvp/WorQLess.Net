@@ -1,5 +1,4 @@
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -43,72 +42,23 @@ namespace WorQLess.Boosters
         public override void Boost
         (
             TypeCreator typeCreator,
-            Type sourceType,
-            Type propertyType,
-            IDictionary<string, IFieldExpression> fields,
-            JProperty property,
             Expression expression,
-            ParameterExpression parameter
+            JProperty property,
+            IDictionary<string, IFieldExpression> fields
         )
         {
-            var jArray = (JArray)property.Value;
+            var parameter = GetParameter(fields, expression);
 
-            if (fields.Any())
-            {
-                var lastField = fields.Last();
-                var type = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
-                var projection = typeCreator.BuildExpression(type, jArray);
+            var fieldValue = CallMethod
+            (
+                typeCreator,
+                parameter,
+                (JArray)property.Value,
+                GroupByMethod,
+                createAnonymousProjection: true
+            );
 
-                var fieldValue = Boost4
-                (
-                    type,
-                    GroupByMethod,
-                    lastField.Value.Expression,
-                    projection,
-                    parameter
-                );
-
-                fieldValue.Parameter = lastField.Value.Parameter;
-                fields.Remove(lastField.Key);
-                fields.Add(property.Name, fieldValue);
-            }
-            else
-            {
-                //var type = expression.Type.GetGenericArguments().LastOrDefault();
-                //var key = GetKey(typeCreator, type, expression, (JArray)jArray[0]);
-
-                //var method = GroupByMethod
-                //    .MakeGenericMethod(type, key.ReturnType);
-
-                //var _expression = Expression.Call
-                //(
-                //    method,
-                //    expression,
-                //    key.GetLambdaExpression()
-                //);
-
-                //var fieldValue = new FieldExpression(_expression, parameter);
-                //var otherArgs = new JArray(jArray.Skip(1));
-                //var pr = new ProjectionRequest
-                //{
-                //    Name = "Select",
-                //    Args = otherArgs
-                //};
-                //var otherProjections = WQL.TypeCreator.BuildExpression(fieldValue.ReturnType, pr);
-
-                //var x = Expression.Parameter(otherProjections.ReturnType);
-
-                //var z = fieldValue.Combine(otherProjections, fieldValue.Parameter);
-
-                ////var fieldValue = new FieldExpression(_expression, parameter);
-                //fields.Add(property.Name, fieldValue);
-            }
-        }
-
-        private IFieldExpression GetKey(TypeCreator typeCreator, Type sourceType, Expression expression, JArray jArray)
-        {
-            var key = typeCreator.BuildExpression(sourceType, jArray);
-            return key;
+            fields.Add(property.Name, fieldValue);
         }
     }
 }
