@@ -63,7 +63,7 @@
   <ItemGroup>
     <Compile Include="Attributes\ExposeAttribute.cs" />
     <Compile Include="Attributes\NotExposeAttribute.cs" />
-    <Compile Include="Boosters\AsBooster.cs" />
+    <Compile Include="Boosters\RenameBooster.cs" />
     <Compile Include="Boosters\Booster.cs" />
     <Compile Include="Boosters\CountBooster.cs" />
     <Compile Include="Boosters\GroupByBooster.cs" />
@@ -74,6 +74,7 @@
     <Compile Include="Boosters\SelectManyBooster.cs" />
     <Compile Include="Boosters\SumBooster.cs" />
     <Compile Include="Boosters\TakeBooster.cs" />
+    <Compile Include="Boosters\WhereBooster.cs" />
     <Compile Include="Extensions\DbContextExtensions.cs" />
     <Compile Include="Extensions\IDictionaryExtensions.cs" />
     <Compile Include="Extensions\Reflection.cs" />

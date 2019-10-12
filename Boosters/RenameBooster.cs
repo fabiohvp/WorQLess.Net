@@ -7,7 +7,7 @@ using WorQLess.Models;
 
 namespace WorQLess.Boosters
 {
-    public class AsBooster : Booster
+    public class RenameBooster : Booster
     {
         public override void Boost
         (

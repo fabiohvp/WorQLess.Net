@@ -36,7 +36,7 @@ namespace WorQLess
             TypeCreator = new TypeCreator("WorQLessDynamicAssembly");
             Boosters = new Dictionary<string, IBooster>
             {
-                { BoosterPrefix + "as", new AsBooster() },
+                { BoosterPrefix + "rename", new RenameBooster() },
                 { BoosterPrefix + "count", new CountBooster() },
                 ////new KeyValuePair<string, IBooster>(BoosterPrefix + "implements", new ImplementsBooster()), //not working yet
                 { BoosterPrefix + "groupBy", new GroupByBooster() },
@@ -47,7 +47,7 @@ namespace WorQLess
                 { BoosterPrefix + "select", new SelectBooster() },
                 { BoosterPrefix + "sum", new SumBooster() },
                 { BoosterPrefix + "take", new TakeBooster() },
-                //            { BoosterPrefix + "where", new WhereBooster() }
+                { BoosterPrefix + "where", new WhereBooster() }
             };
             ProjectionsTypes = new Dictionary<string, Type>
             {

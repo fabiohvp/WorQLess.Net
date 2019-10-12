@@ -1,5 +1,5 @@
-using domain.Models.DWControleSocial;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -38,26 +38,26 @@ namespace WorQLess.Boosters
             {
                 var lastField = fields.LastOrDefault();
                 var entityType = parameter.Type.GetGenericArguments().Last();
-                var entityParameter = Expression.Parameter(entityType);
 
-                var queryType = typeof(IQueryable<>).MakeGenericType(entityType);
-                var queryParameter = Expression.Parameter(queryType);
+                if (lastField.Value == null)
+                {
+                    throw new NotImplementedException("Nested SelectMany still not implemented");
+                }
+                else
+                {
+                    var selectProjection = typeCreator.BuildProjection(parameter, (JArray)property.Value, false);
+                    var selectLambda = selectProjection.GetLambdaExpression();
+                    var returnType = selectProjection.Expression.Type.GetGenericArguments().Single();
 
-                var selectProjection = typeCreator.BuildProjection(parameter, (JArray)property.Value, false);
-                var selectLamda = selectProjection.GetLambdaExpression();
+                    var groupByCall = lastField.Value.Expression;
+                    var selectCall = Expression.Call(typeof(Queryable), nameof(Queryable.SelectMany), new Type[] { parameter.Type, returnType }, groupByCall, Expression.Quote(selectLambda));
 
-                var method = SelectManyMethod.MakeGenericMethod(queryType, selectLamda.Body.Type.GetGenericArguments().LastOrDefault());
-                var selectCall = Expression.Call(method, queryParameter, Expression.Quote(selectLamda));
+                    var fieldValue = new FieldExpression(selectCall, parameter);
 
-                var fieldValue = new FieldExpression(selectCall, lastField.Value.Parameter);
-                fields.Remove(lastField.Key);
-                fields.Add(property.Name, fieldValue);
-
-
-                var x = new List<FT_ReceitaMunicipio>()
-                    .Select(o => new { o.IdTempo, o.Arrecadada })
-                    .GroupBy(o => new { o.IdTempo })
-                    .SelectMany(o => o.Select(p => p.Arrecadada));
+                    fieldValue.Parameter = lastField.Value.Parameter;
+                    fields.Remove(lastField.Key);
+                    fields.Add(property.Name, fieldValue);
+                }
             }
             else
             {

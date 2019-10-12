@@ -29,7 +29,7 @@ namespace WorQLess.Boosters
                 .GetMethod(nameof(ApplyOperand), BindingFlags.NonPublic | BindingFlags.Static);
         }
 
-        public override IFieldExpression Boost2(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, ParameterExpression parameter)
+        private IFieldExpression Boost2(TypeCreator typeCreator, Type propertyType, JArray jArray, Expression expression, Expression parameter)
         {
             expression = GetRuleContainer(typeCreator, (JObject)jArray.First(), propertyType);
 
@@ -50,14 +50,13 @@ namespace WorQLess.Boosters
         public override void Boost
         (
             TypeCreator typeCreator,
-            Type sourceType,
-            Type propertyType,
-            IDictionary<string, IFieldExpression> fields,
-            JProperty property,
             Expression expression,
-            ParameterExpression parameter
+            JProperty property,
+            IDictionary<string, IFieldExpression> fields
         )
         {
+            var parameter = GetParameter(fields, expression);
+
             if (fields.Any())
             {
                 var lastField = fields.Last();
@@ -106,7 +105,8 @@ namespace WorQLess.Boosters
         private static Expression GetRuleContainer(TypeCreator typeCreator, Dictionary<string, JToken> props, Type returnType)
         {
             var _fields = new Dictionary<string, IFieldExpression>();
-            var fieldExpression = typeCreator.BuildExpression(returnType, (JArray)props["args"], false);
+            var p = Expression.Parameter(returnType);
+            var fieldExpression = typeCreator.BuildProjection(p, (JArray)props["args"], false);
             var rules = (JArray)props["rules"];
             var _expression = GetRule(typeCreator, (JObject)rules.First(), returnType, fieldExpression);
 
