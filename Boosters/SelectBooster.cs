@@ -33,52 +33,48 @@ namespace WorQLess.Boosters
         )
         {
             var parameter = GetParameter(fields, expression);
+            var lastField = fields.LastOrDefault();
 
-            if (parameter.Type.FullName.Contains("IGrouping"))
+            if (lastField.Value == null)
             {
-                var lastField = fields.LastOrDefault();
-                var entityType = parameter.Type.GetGenericArguments().Last();
+                var entityType = parameter.Type;
+                var entityParameter = parameter;
+                var asQueryableCall = parameter;
 
-                if (lastField.Value == null)
+                if (parameter.Type.FullName.Contains("IQueryable") || parameter.Type.FullName.Contains("IEnumerable") || parameter.Type.FullName.Contains("ICollection"))
                 {
-                    var entityParameter = Expression.Parameter(entityType);
-                    var asQueryableCall = AsQueryable(parameter);
-
-                    var selectProjection = typeCreator.BuildProjection(entityParameter, (JArray)property.Value, false);
-                    var selectLambda = selectProjection.GetLambdaExpression();
-
-                    var selectCall = Expression.Call(typeof(Queryable), nameof(Queryable.Select), new Type[] { entityType, selectLambda.Body.Type }, asQueryableCall, Expression.Quote(selectLambda));
-                    var asEnumerableCall = Expression.Call(typeof(Enumerable), nameof(Enumerable.AsEnumerable), new Type[] { selectLambda.Body.Type }, selectCall);
-
-                    var fieldValue = new FieldExpression(asEnumerableCall, parameter);
-                    fields.Add(property.Name, fieldValue);
+                    entityType = parameter.Type.GetGenericArguments().Last();
+                    entityParameter = Expression.Parameter(entityType);
+                    asQueryableCall = AsQueryable(parameter);
                 }
                 else
                 {
-                    var selectProjection = typeCreator.BuildProjection(parameter, (JArray)property.Value, false);
-                    var selectLambda = selectProjection.GetLambdaExpression();
-
-                    var groupByCall = lastField.Value.Expression;
-                    var selectCall = Expression.Call(typeof(Queryable), nameof(Queryable.Select), new Type[] { parameter.Type, selectLambda.Body.Type }, groupByCall, Expression.Quote(selectLambda));
-
-                    var fieldValue = new FieldExpression(selectCall, parameter);
-
-                    fieldValue.Parameter = lastField.Value.Parameter;
-                    fields.Remove(lastField.Key);
-                    fields.Add(property.Name, fieldValue);
+                    var queryType = typeof(IQueryable<>).MakeGenericType(parameter.Type);
+                    parameter = Expression.Parameter(queryType);
+                    asQueryableCall = parameter;
                 }
+
+                var selectProjection = typeCreator.BuildProjection(entityParameter, (JArray)property.Value, false);
+                var selectLambda = selectProjection.GetLambdaExpression();
+
+                var selectCall = Expression.Call(typeof(Queryable), nameof(Queryable.Select), new Type[] { entityType, selectLambda.Body.Type }, asQueryableCall, Expression.Quote(selectLambda));
+                var asEnumerableCall = Expression.Call(typeof(Enumerable), nameof(Enumerable.AsEnumerable), new Type[] { selectLambda.Body.Type }, selectCall);
+
+                var fieldValue = new FieldExpression(asEnumerableCall, parameter);
+                fields.Add(property.Name, fieldValue);
             }
             else
             {
-                var fieldValue = CallMethod
-                (
-                    typeCreator,
-                    parameter,
-                    (JArray)property.Value,
-                    SelectMethod,
-                    createAnonymousProjection: false
-                );
+                var selectProjection = typeCreator.BuildProjection(parameter, (JArray)property.Value, false);
+                var selectLambda = selectProjection.GetLambdaExpression();
 
+                var groupByCall = lastField.Value.Expression;
+                var selectCall = Expression.Call(typeof(Queryable), nameof(Queryable.Select), new Type[] { parameter.Type, selectLambda.Body.Type }, groupByCall, Expression.Quote(selectLambda));
+
+                var fieldValue = new FieldExpression(selectCall, parameter);
+
+                fieldValue.Parameter = lastField.Value.Parameter;
+                fields.Remove(lastField.Key);
                 fields.Add(property.Name, fieldValue);
             }
         }

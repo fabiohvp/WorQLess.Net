@@ -33,45 +33,53 @@ namespace WorQLess.Boosters
         )
         {
             var parameter = GetParameter(fields, expression);
+            var lastField = fields.LastOrDefault();
 
-            if (parameter.Type.FullName.Contains("IGrouping"))
+            //if (lastField.Value != null && (parameter.Type.FullName.Contains("IQueryable") || parameter.Type.FullName.Contains("IEnumerable") || parameter.Type.FullName.Contains("ICollection")))
+            //{
+            //    var fieldValue = CallMethod
+            //    (
+            //        typeCreator,
+            //        parameter,
+            //        (JArray)property.Value,
+            //        SelectManyMethod,
+            //        createAnonymousProjection: false
+            //    );
+
+            //    fields.Add(property.Name, fieldValue);
+            //}
+            //else
+            //{
+            if (lastField.Value == null)
             {
-                var lastField = fields.LastOrDefault();
-                var entityType = parameter.Type.GetGenericArguments().Last();
+                var queryType = typeof(IQueryable<>).MakeGenericType(parameter.Type);
+                var queryTypeParameter = Expression.Parameter(queryType);
 
-                if (lastField.Value == null)
-                {
-                    throw new NotImplementedException("Nested SelectMany still not implemented");
-                }
-                else
-                {
-                    var selectProjection = typeCreator.BuildProjection(parameter, (JArray)property.Value, false);
-                    var selectLambda = selectProjection.GetLambdaExpression();
-                    var returnType = selectProjection.Expression.Type.GetGenericArguments().Single();
+                var selectProjection = typeCreator.BuildProjection(parameter, (JArray)property.Value, false);
+                var selectLambda = selectProjection.GetLambdaExpression();
+                var returnType = selectProjection.Expression.Type.GetGenericArguments().Single();
 
-                    var groupByCall = lastField.Value.Expression;
-                    var selectCall = Expression.Call(typeof(Queryable), nameof(Queryable.SelectMany), new Type[] { parameter.Type, returnType }, groupByCall, Expression.Quote(selectLambda));
+                var selectCall = Expression.Call(typeof(Queryable), nameof(Queryable.SelectMany), new Type[] { parameter.Type, returnType }, queryTypeParameter, Expression.Quote(selectLambda));
 
-                    var fieldValue = new FieldExpression(selectCall, parameter);
-
-                    fieldValue.Parameter = lastField.Value.Parameter;
-                    fields.Remove(lastField.Key);
-                    fields.Add(property.Name, fieldValue);
-                }
+                var fieldValue = new FieldExpression(selectCall, queryTypeParameter);
+                fields.Add(property.Name, fieldValue);
             }
             else
             {
-                var fieldValue = CallMethod
-                (
-                    typeCreator,
-                    parameter,
-                    (JArray)property.Value,
-                    SelectManyMethod,
-                    createAnonymousProjection: false
-                );
+                var selectProjection = typeCreator.BuildProjection(parameter, (JArray)property.Value, false);
+                var selectLambda = selectProjection.GetLambdaExpression();
+                var returnType = selectProjection.Expression.Type.GetGenericArguments().Single();
 
+                var groupByCall = lastField.Value.Expression;
+                var selectCall = Expression.Call(typeof(Queryable), nameof(Queryable.SelectMany), new Type[] { parameter.Type, returnType }, groupByCall, Expression.Quote(selectLambda));
+
+                var fieldValue = new FieldExpression(selectCall, parameter);
+
+                fieldValue.Parameter = lastField.Value.Parameter;
+                fields.Remove(lastField.Key);
                 fields.Add(property.Name, fieldValue);
             }
+            //}
         }
     }
 }

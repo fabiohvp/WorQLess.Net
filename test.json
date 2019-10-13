@@ -5,38 +5,30 @@
     "project": {
       "args": [
         {
-          "$select": [
-            "Arrecadada",
-            "IdTempo"
+          "$where": [ //todo
+            {
+              "name": [ "IdEsferaAdministrativa" ],
+              "rule": "==",
+              "value": 1
+            }
           ],
-          "$groupBy": [ "IdTempo" ],
-          "$select_": [
-            { "$sum": [ "Arrecadada" ] }
-          ],
-          "$take": 5
-        }
-      ]
-    }
-  }
-]
-
-[
-  {
-    "entity": "FT_ReceitaMunicipio",
-    "name": "Select",
-    "project": {
-      "args": [
-        {
-          "$select": [
-            "IdTempo",
-            "Arrecadada"
-          ],
-          "$orderByDesc": [ "IdTempo" ],
+          "$orderByDesc": [ "IdEsferaAdministrativa" ],
           "$take": 10000,
-          "$groupBy": [ "IdTempo" ],
-          "$select_": [
-            { "Key": [ "IdTempo" ] },
-            { "$sum": [ "Arrecadada" ] }
+          "$groupBy": [ "IdTempo", "IdEsferaAdministrativa" ],
+          "$select": [
+            {
+              "Key": [ "IdTempo", "IdEsferaAdministrativa" ]
+            },
+            {
+              "$rename": [
+                {
+                  "$sum": [
+                    "Arrecadada"
+                  ]
+                },
+                "Total"
+              ]
+            }
           ],
           "$count": []
         }

@@ -35,6 +35,11 @@ namespace WorQLess.Models
             Parameter = parameter as ParameterExpression;
             ReturnType = type;
             Interfaces = new List<Type>();
+
+            if (Parameter == null)
+            {
+                Parameter = (ParameterExpression)(parameter as MemberExpression).Expression;
+            }
         }
 
         public LambdaExpression GetLambdaExpression()

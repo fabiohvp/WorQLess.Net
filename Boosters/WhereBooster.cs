@@ -47,6 +47,36 @@ namespace WorQLess.Boosters
             return new FieldExpression(expression, parameter);
         }
 
+
+        private void EvalItem
+        (
+            TypeCreator typeCreator,
+            Expression parameter,
+            JObject jObject
+        )
+        {
+            var props = jObject.Properties()
+                .ToDictionary(o => o.Name, o => o.Value);
+
+            var left = props["name"];
+            var rule = props["rule"];
+            var right = props["value"];
+
+            var leftExpression = typeCreator.BuildProjection(parameter, (JArray)left, false);
+
+            var rightExpression = default(IFieldExpression);
+
+            if (right is JArray)
+            {
+                rightExpression = typeCreator.BuildProjection(parameter, (JArray)right, false);
+            }
+            else
+            {
+                rightExpression = new FieldExpression(Expression.Constant(right.Value<object>()), parameter);
+            }
+        }
+
+
         public override void Boost
         (
             TypeCreator typeCreator,
@@ -55,44 +85,51 @@ namespace WorQLess.Boosters
             IDictionary<string, IFieldExpression> fields
         )
         {
+            var jArray = (JArray)property.Value;
             var parameter = GetParameter(fields, expression);
 
-            if (fields.Any())
+            foreach (var item in jArray)
             {
-                var lastField = fields.Last();
-                var returnType = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
-                var _expression = Boost2(typeCreator, returnType, (JArray)property.Value, expression, parameter)
-                    .Expression;
-                var method = WhereMethod
-                    .MakeGenericMethod(returnType);
-                var whereExpression = Expression.Call
-                (
-                    method,
-                    lastField.Value.Expression,
-                    _expression
-                );
-
-                fields.Remove(lastField.Key);
-                var fieldValue = new FieldExpression(whereExpression, lastField.Value.Parameter);
-                fields.Add(property.Name, fieldValue);
+                EvalItem(typeCreator, parameter, (JObject)item);
             }
-            else
-            {
-                var returnType = expression.Type.GetGenericArguments().LastOrDefault();
-                var _expression = Boost2(typeCreator, returnType, (JArray)property.Value, expression, parameter)
-                    .Expression;
-                var method = WhereMethod
-                    .MakeGenericMethod(returnType);
-                var whereExpression = Expression.Call
-                (
-                    method,
-                    expression,
-                    _expression
-                );
 
-                var fieldValue = new FieldExpression(whereExpression, parameter);
-                fields.Add(property.Name, fieldValue);
-            }
+            //domain.Models.DWControleSocial.FT_ReceitaMunicipio
+            //if (fields.Any())
+            //{
+            //    var lastField = fields.Last();
+            //    var returnType = lastField.Value.ReturnType.GetGenericArguments().LastOrDefault();
+            //    var _expression = Boost2(typeCreator, returnType, (JArray)property.Value, expression, parameter)
+            //        .Expression;
+            //    var method = WhereMethod
+            //        .MakeGenericMethod(returnType);
+            //    var whereExpression = Expression.Call
+            //    (
+            //        method,
+            //        lastField.Value.Expression,
+            //        _expression
+            //    );
+
+            //    fields.Remove(lastField.Key);
+            //    var fieldValue = new FieldExpression(whereExpression, lastField.Value.Parameter);
+            //    fields.Add(property.Name, fieldValue);
+            //}
+            //else
+            //{
+            //    var returnType = expression.Type.GetGenericArguments().LastOrDefault();
+            //    var _expression = Boost2(typeCreator, returnType, (JArray)property.Value, expression, parameter)
+            //        .Expression;
+            //    var method = WhereMethod
+            //        .MakeGenericMethod(returnType);
+            //    var whereExpression = Expression.Call
+            //    (
+            //        method,
+            //        expression,
+            //        _expression
+            //    );
+
+            //    var fieldValue = new FieldExpression(whereExpression, parameter);
+            //    fields.Add(property.Name, fieldValue);
+            //}
         }
 
         private static Expression GetRuleContainer(TypeCreator typeCreator, JObject jObject, Type returnType)
